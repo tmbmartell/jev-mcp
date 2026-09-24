@@ -21,11 +21,15 @@ confiança — que o seu código usa diretamente, sem `prompt` e `parse`.
 
 Requisitos: Python 3.10+ e o pacote `mcp`.
 
-```bash
-python3 -m pip install mcp
-```
+Passo a passo completo, com solução de problemas: **[INSTALL.md](INSTALL.md)**
 
-Depois clone este repositório e aponte o seu agente para `mcp_server.py`.
+Resumo para Hermes:
+
+```bash
+git clone https://github.com/tmbmartell/jev-mcp.git
+cd jev-mcp
+./scripts/install.sh          # confere, instala e registra
+```
 
 ### Configurar a chave
 
