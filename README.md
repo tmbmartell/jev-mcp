@@ -176,11 +176,10 @@ Cada resposta traz `cost_usd`, então dá para contabilizar por fluxo.
 
 ```
 mcp_server.py         servidor MCP (stdio)  <- o que o time registra no agente
-jev.py                cliente HTTP + validacao por regra (base de tudo)
+jev.py                cliente HTTP + validacao por regra + as duas rotas (base de tudo)
 cli.py                CLI para uso em terminal
 test_mcp_client.py    teste de ponta a ponta falando o protocolo MCP
 examples/             exemplos de payload
-typesafe.py           implementacao da rota direta do TypeSafe (alternativa)
 inspect_openapi.py    utilitario: extrai os schemas do openapi.json do OpenRouter
 ```
 

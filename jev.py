@@ -3,9 +3,9 @@
 Cliente Jev (System One) com duas rotas:
 
   rota "openrouter" (padrao) -> POST https://openrouter.ai/api/alpha/decisions
-                                chave em /root/.secrets/openrouter.key
+                                chave: OPENROUTER_API_KEY ou ~/.hermes/secrets/openrouter.key
   rota "typesafe"            -> POST https://api.typesafe.ai/v1/systemone
-                                chave em /root/.secrets/typesafe.key
+                                chave: TYPESAFE_API_KEY ou ~/.hermes/secrets/typesafe.key
 
 Modelo: typesafe/jev-1.13  (OpenRouter)  |  jev-latest (TypeSafe direto)
 
@@ -29,10 +29,7 @@ SECRETS_DIR = os.environ.get("JEV_SECRETS_DIR") or os.path.join(HERMES_HOME, "se
 
 def _keyfiles(name):
     """Locais onde procurar a chave, do mais portavel ao local."""
-    return [
-        os.path.join(SECRETS_DIR, name),
-        os.path.join("/root/.secrets", name),
-    ]
+    return [os.path.join(SECRETS_DIR, name)]
 
 
 ROUTES = {
