@@ -1,0 +1,35 @@
+{
+  "state": {
+    "customer_tier": "enterprise",
+    "channel": "email",
+    "ticket": "Meu checkout mostra tela branca depois que clico em Pagar. Ja tentei dois navegadores."
+  },
+  "questions": {
+    "e_bug": {
+      "type": "noul",
+      "instructions": "O cliente esta relatando um defeito de software?",
+      "criteria": {
+        "true": "Descreve comportamento quebrado ou inesperado do produto",
+        "false": "Faz uma pergunta, pede funcionalidade ou elogia"
+      }
+    },
+    "equipe": {
+      "type": "choice",
+      "instructions": "Qual equipe deve assumir este ticket?",
+      "criteria": {
+        "account": "Login, permissoes ou perfil",
+        "frontend": "Renderizacao, layout ou compatibilidade de navegador",
+        "payments": "Checkout, cobranca ou processamento de pagamento"
+      }
+    },
+    "urgencia": {
+      "type": "score",
+      "instructions": "Quao urgente e este ticket?",
+      "criteria": [
+        "Pode esperar a proxima versao",
+        "Deveria ser corrigido esta semana",
+        "Bloqueando receita agora"
+      ]
+    }
+  }
+}

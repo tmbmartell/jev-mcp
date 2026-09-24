@@ -1,0 +1,22 @@
+# Segredos e ambiente
+.env
+*.env
+.secrets/
+*key*.txt
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Editores e sistema
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Saidas locais
+*.log
+resultado*.json
