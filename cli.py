@@ -34,7 +34,15 @@ import json
 import sys
 import os
 
-sys.path.insert(0, "/root/jev")
+# O cliente HTTP vive no clone do servidor MCP. JEV_MCP_HOME aponta para o clone;
+# sem ele, procura no diretório do próprio cli.py e no clone padrão.
+for _cand in (os.environ.get("JEV_MCP_HOME"),
+              os.path.dirname(os.path.abspath(__file__)),
+              "/root/jev-mcp"):
+    if _cand and os.path.exists(os.path.join(_cand, "jev.py")):
+        sys.path.insert(0, _cand)
+        break
+
 import jev as jm  # noqa: E402
 
 

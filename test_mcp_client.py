@@ -71,7 +71,7 @@ async def main():
 
             print("6) ferramenta inexistente")
             r = await session.call_tool("nao_existe", {})
-            if r.isError:
+            if getattr(r, "is_error", None) or getattr(r, "isError", None):
                 print(f"   recusado como esperado (isError=True): "
                       f"{r.content[0].text[:80]}")
             else:
