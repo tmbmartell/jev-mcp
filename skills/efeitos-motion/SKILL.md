@@ -39,32 +39,41 @@ Exemplo completo de plano: **`references/plano-exemplo.json`**.
    pip install pillow numpy ai-edge-litert   # ai-edge-litert só é usado nos efeitos que recortam a pessoa
    ffmpeg -version                            # precisa existir
    ```
-2. **Entender o vídeo**: rode `ffprobe` para duração/resolução e extraia alguns quadros
+2. **Preparar o bruto** quando ela pedir para acelerar a fala, limpar ruído ou se o vídeo vier de
+   WhatsApp/celular (baixa resolução, áudio com chiado):
+   ```bash
+   python scripts/preparar.py bruto.mp4 base.mp4 --velocidade 1.2      # acelera + limpa ruído + -14 LUFS
+   python scripts/preparar.py base.mp4 --transcrever palavras.json      # tempos de cada palavra (faster-whisper)
+   ```
+   Sempre transcreva o vídeo **já acelerado**, para os tempos baterem. Revise a transcrição: o Whisper
+   erra palavras parecidas (ex.: "vende você" → "vem de você"); corrija no JSON antes da legenda.
+   Se o download do modelo for bloqueado, passe `--modelo` com o caminho de um modelo CTranslate2 local.
+3. **Entender o vídeo**: rode `ffprobe` para duração/resolução e extraia alguns quadros
    (`ffmpeg -ss T -i video.mp4 -frames:v 1 q.png`) para ver onde está o rosto, o que tem no fundo
    e onde há espaço livre na tela.
-3. **Mapear o pedido em tempo**: cada efeito tem `inicio` e `fim` em segundos.
+4. **Mapear o pedido em tempo**: cada efeito tem `inicio` e `fim` em segundos.
    - Se a pessoa disse "quando eu falar X" e há transcrição disponível (Whisper instalado ou legenda
      enviada por ela), use o tempo da palavra. Sem transcrição, pergunte o segundo aproximado ou
      estime e mostre um preview para ela confirmar.
-   - Para `legenda`, prefira `palavras: [[palavra, segundo], ...]` com tempos reais; se só tiver o
+   - Para `legenda`, prefira `palavras: [[palavra, inicio, fim], ...]` (saída do `preparar.py`); se só tiver o
      texto, use `texto` + `inicio`/`fim` (o script distribui as palavras pelo tamanho).
-4. **Escrever o plano** `plano.json` ao lado do vídeo (caminhos relativos ao JSON). A ordem importa:
+5. **Escrever o plano** `plano.json` ao lado do vídeo (caminhos relativos ao JSON). A ordem importa:
    - primeiro os que mexem no quadro inteiro: `parede_videos`, `zoom_palavra`, `fundo_trocado`,
      `recorte_papel`, `afasta_e_revela`;
    - depois os que dependem da pessoa recortada: `orbita`, `capa_revista`, `mural_comentarios`;
    - por último o que só desenha por cima: cards, títulos, `legenda` (sempre no fim, por cima de tudo).
-5. **Conferir com preview antes de renderizar** (rápido, um PNG):
+6. **Conferir com preview antes de renderizar** (rápido, um PNG):
    ```bash
    python scripts/motion.py preview plano.json 12.5
    ```
    Olhe o PNG: texto cobrindo o rosto? card cortado na borda? Ajuste `y`, `x`, `tamanho`.
-6. **Renderizar**:
+7. **Renderizar**:
    ```bash
    python scripts/motion.py render plano.json            # vídeo inteiro
    python scripts/motion.py render plano.json 10 20      # só um trecho, para testar
    ```
    ~1,5× o tempo real em CPU para 720×1280. Áudio original é mantido.
-7. **Entregar** o MP4 e listar em uma tabela curta qual efeito entrou em qual segundo, para a pessoa
+8. **Entregar** o MP4 e listar em uma tabela curta qual efeito entrou em qual segundo, para a pessoa
    pedir ajustes ("muda a órbita para 2 s depois", "legenda maior").
 
 ## Regras de estilo (o "jeito" desse kit)
@@ -86,6 +95,8 @@ Exemplo completo de plano: **`references/plano-exemplo.json`**.
 - **Sem `ai-edge-litert`** (instalação bloqueada): os efeitos que recortam a pessoa param com aviso.
   Use os demais; `capa_revista` funciona com `"atras_da_pessoa": false` e `mural_comentarios`
   com `"fundo_escuro": false`.
+- **Roupa clara** (blusa branca): legenda branca some. Use `"cor": "#1A1A1A"` e `"cor_destaque": "vermelho"`.
+- **Close no rosto**: cards no topo (`y` ≈ 0.1) e legenda na altura da roupa (`y` ≈ 0.83); em `mural_comentarios` use `"atras_da_pessoa": true`.
 - **Vídeo horizontal**: funciona, mas as posições padrão foram pensadas para 9:16.
 - Para criar um efeito novo, siga o padrão do arquivo: uma função `@efeito("nome", "descrição")`
   que recebe `(canvas, t, ef, ctx)` e devolve o canvas.

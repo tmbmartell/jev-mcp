@@ -585,10 +585,12 @@ def capa_revista(cv, t, ef, ctx):
 @efeito("mural_comentarios", "Comentários de rede social voando para a tela, opcionalmente com fundo preto atrás da pessoa.")
 def mural_comentarios(cv, t, ef, ctx):
     W, H, u = cv.size[0], cv.size[1], ctx.u
+    atras = ef.get("atras_da_pessoa", False)
+    pessoa = ctx.pessoa(cv) if atras or ef.get("fundo_escuro", True) else None
     if ef.get("fundo_escuro", True):
         a = envelope(t, ef["inicio"], ef["fim"], 0.25, 0.25)
         bg = Image.new("RGBA", (W, H), (0, 0, 0, 255))
-        bg.alpha_composite(ctx.pessoa(cv))
+        bg.alpha_composite(pessoa)
         cv = Image.blend(cv, bg, a)
     coms = ef.get("comentarios") or [{"usuario": "fulano", "texto": "Comentário de exemplo"}]
     rnd = random.Random(3)
@@ -606,6 +608,8 @@ def mural_comentarios(cv, t, ef, ctx):
         x = px * W + lado * (1 - e) * W * 0.8
         y = py * H - (t - t0) * 8 * u
         colar(cv, card, x, y, alpha=s, rot=rnd.uniform(-3, 3))
+    if atras:
+        cv.alpha_composite(pessoa)
     return cv
 
 
@@ -796,7 +800,13 @@ def legenda(cv, t, ef, ctx):
     chave = ("leg", id(ef))
     if chave not in ctx.cache:
         if ef.get("palavras"):
-            pal = [(p[0], float(p[1])) for p in ef["palavras"]]
+            pal = []
+            for k, p in enumerate(ef["palavras"]):
+                pal.append((p[0], float(p[1])))
+                # [palavra, inicio, fim]: some na pausa se a próxima demora a chegar
+                prox = ef["palavras"][k + 1][1] if k + 1 < len(ef["palavras"]) else ef["fim"]
+                if len(p) > 2 and prox - float(p[2]) > 0.6:
+                    pal.append(("", float(p[2]) + 0.3))
         else:
             ws = ef.get("texto", "").split()
             pesos = [len(w) + 2 for w in ws]
@@ -816,10 +826,13 @@ def legenda(cv, t, ef, ctx):
     if not atual:
         return cv
     w, ti, i = atual
+    if not w:
+        return cv
     destaques = set(x.lower() for x in ef.get("destaques", []))
     limpa = w.lower().strip(".,!?;:")
-    col = COR["amarelo"] if limpa in destaques else cor(ef.get("cor"))
-    img = texto_img(w, fonte("serif", ef.get("tamanho", 34) * u), (*col, 255))
+    col = cor(ef.get("cor_destaque"), "amarelo") if limpa in destaques else cor(ef.get("cor"))
+    escuro = sum(col) < 200
+    img = texto_img(w, fonte("serif", ef.get("tamanho", 34) * u), (*col, 255), sombra_txt=not escuro)
     s = 0.86 + 0.14 * ease_back((t - ti) / 0.12)
     colar(cv, img, W / 2, ef.get("y", 0.475) * H, s)
     return cv

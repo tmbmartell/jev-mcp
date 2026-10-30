@@ -91,6 +91,7 @@ Duração boa: 4–6 s (precisa de tempo para digitar).
 |---|---|---|
 | `comentarios` | 1 de exemplo | lista de `{"usuario", "texto", "rodape"?, "cor_avatar"?}` — até 8 |
 | `fundo_escuro` | true | fundo preto atrás da pessoa |
+| `atras_da_pessoa` | false | comentários passam por trás (não cobrem o rosto) |
 | `intervalo` | 0.25 | segundos entre um comentário e outro |
 
 ## 10 · `afasta_e_revela` (✂ no modo `recorte`)
@@ -121,7 +122,7 @@ Tem "tremidinha" de stop-motion (8 qps) de propósito.
 | `palavras` | — | `[["Tudo", 3.2], ["que", 3.45], ...]` — tempo em que cada palavra começa |
 | `texto` | — | alternativa sem tempos: distribui entre `inicio` e `fim` |
 | `destaques` | [] | palavras que ficam amarelas |
-| `tamanho`, `y`, `cor` | 34, 0.475, branco | |
+| `tamanho`, `y`, `cor`, `cor_destaque` | 34, 0.475, branco, amarelo | texto escuro (ex. `#1A1A1A`) para roupa clara |
 
 Gerar `palavras` com Whisper, se disponível:
 ```python
