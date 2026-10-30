@@ -149,3 +149,10 @@ palavras = [[w.word.strip(), round(w.start, 2)] for s in segs for w in s.words]
 ## `dm_link`
 `palavra` ("editar"), `mensagem` ("Aqui está o seu link"), `remetente` ("voce · direct"),
 `atraso_notificacao` (0.6), `y` (0.86).
+
+## `titulo_empilhado` (molde café)
+`palavras` ([[palavra, segundo], ...]), `tamanho` (170), `y` (0.23, topo do bloco), `entrelinha` (0.9), `sombra` (false), `cor` (#FCF6BA).
+
+## `destaque` (molde café)
+`linhas` (sans), `script` (manuscrito que se escreve a `letras_por_s`=20 e sai 0,15 s antes do fim), `sub` (entra 0,25 s após o manuscrito),
+`tamanho` (64), `tamanho_script` (96), `tamanho_sub` (22), `y` (0.62, centro do bloco), `sombra` (false), `cor` (#FCF6BA).

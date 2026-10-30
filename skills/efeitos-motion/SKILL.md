@@ -30,6 +30,10 @@ renderizados por `scripts/motion.py` (Python + Pillow + ffmpeg, com recorte de p
 | + | `dm_link` | "fecha com a DM do link, palavra *editar*" | Campo de DM digitando a palavra + notificação "Aqui está o seu link" |
 
 Parâmetros de cada efeito, valores padrão e dicas de tempo: **`references/efeitos.md`**.
+
+**Molde "Café com Gancho"** ("edita no molde café"): estilo minimalista só com texto amarelo-manteiga,
+manuscrito que se escreve, legenda serifada pequena e pausas cortadas. Efeitos `titulo_empilhado` + `destaque` +
+`legenda`. Receita completa em **`references/molde-cafe-com-gancho.md`**.
 Exemplo completo de plano: **`references/plano-exemplo.json`**.
 
 ## Fluxo de trabalho

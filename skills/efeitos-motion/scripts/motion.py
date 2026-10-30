@@ -53,6 +53,9 @@ def fonte(nome, tam):
         "serif": "PlayfairDisplay-Bold.woff",
         "sans": "Inter-Medium.woff",
         "sans_bold": "Inter-SemiBold.woff",
+        "jakarta": "PlusJakartaSans-Medium.woff",
+        "script": "Sacramento-Regular.woff",
+        "lora": "Lora-Regular.woff",
     }[nome]
     chave = (arq, int(tam))
     if chave not in _fontes:
@@ -832,8 +835,9 @@ def legenda(cv, t, ef, ctx):
     limpa = w.lower().strip(".,!?;:")
     col = cor(ef.get("cor_destaque"), "amarelo") if limpa in destaques else cor(ef.get("cor"))
     escuro = sum(col) < 200
-    img = texto_img(w, fonte("serif", ef.get("tamanho", 34) * u), (*col, 255), sombra_txt=not escuro)
-    s = 0.86 + 0.14 * ease_back((t - ti) / 0.12)
+    img = texto_img(w, fonte(ef.get("fonte", "serif"), ef.get("tamanho", 34) * u), (*col, 255),
+                    sombra_txt=ef.get("sombra", not escuro))
+    s = 1.0 if ef.get("corte_seco") else 0.86 + 0.14 * ease_back((t - ti) / 0.12)
     colar(cv, img, W / 2, ef.get("y", 0.475) * H, s)
     return cv
 
@@ -965,6 +969,101 @@ def dm_link(cv, t, ef, ctx):
     colar(cv, sombra(campo, 12, 90, 4), W / 2, y + (1 - ease_out(a)) * 40 * u, alpha=a)
     return cv
 
+
+
+# ---------------------------------------------------------------- molde "café com gancho"
+# Texto amarelo-manteiga sem animação de entrada (corte seco), manuscrito que se escreve
+# da esquerda para a direita e sai primeiro. Ver references/molde-cafe-com-gancho.md.
+
+MANTEIGA = (252, 246, 186)
+
+
+def _txt_molde(txt, fnt, col, sombra_on, contorno=0):
+    bb = fnt.getbbox(txt, stroke_width=contorno)
+    img = Image.new("RGBA", (bb[2] - bb[0] + 16, bb[3] + 16), (0, 0, 0, 0))
+    ImageDraw.Draw(img).text((8 - bb[0], 6), txt, font=fnt, fill=(*col, 255),
+                             stroke_width=contorno, stroke_fill=(*col, 255))
+    if sombra_on:
+        img = sombra(img, raio=12, opac=70, dy=0)
+    return img
+
+
+def _revelar(img, frac):
+    """Mostra só a parte esquerda da imagem (escrita à mão), com borda suave."""
+    if frac >= 1:
+        return img
+    w = img.width
+    x = int(w * clamp(frac))
+    grad = Image.new("L", (w, img.height), 0)
+    if x > 0:
+        grad.paste(255, (0, 0, x, img.height))
+    grad = grad.filter(ImageFilter.GaussianBlur(4))
+    out = img.copy()
+    out.putalpha(ImageChops.multiply(img.getchannel("A"), grad))
+    return out
+
+
+@efeito("titulo_empilhado", "Título de abertura em CAIXA ALTA: uma palavra por vez, empilhada, no instante em que é dita (molde café).")
+def titulo_empilhado(cv, t, ef, ctx):
+    W, H, u = cv.size[0], cv.size[1], ctx.u
+    col = cor(ef.get("cor"), MANTEIGA) if ef.get("cor") else MANTEIGA
+    tam = ef.get("tamanho", 170) * u
+    visiveis = [p for p in ef["palavras"] if t >= p[1]]
+    if not visiveis:
+        return cv
+    fnt = fonte("jakarta", tam)
+    for p in ef["palavras"]:  # encolhe tudo se alguma palavra não couber em 86% da largura
+        while fnt.getlength(p[0].upper()) > W * 0.86 and tam > 30:
+            tam *= 0.95
+            fnt = fonte("jakarta", tam)
+    passo = tam * ef.get("entrelinha", 0.9)
+    y0 = ef.get("y", 0.23) * H
+    for i, p in enumerate(visiveis):
+        img = _txt_molde(p[0].upper(), fnt, col, ef.get("sombra", False))
+        colar(cv, img, W / 2, y0 + i * passo + img.height / 2 - tam * 0.12)
+    return cv
+
+
+@efeito("destaque", "Bloco de texto do molde café: linhas em sans + palavra manuscrita que se escreve + subtítulo pequeno.")
+def destaque(cv, t, ef, ctx):
+    W, H, u = cv.size[0], cv.size[1], ctx.u
+    ini, fim = ef["inicio"], ef["fim"]
+    col = cor(ef.get("cor"), MANTEIGA) if ef.get("cor") else MANTEIGA
+    sh = ef.get("sombra", False)
+    pecas = []  # (imagem, altura reservada)
+    fs = fonte("jakarta", ef.get("tamanho", 64) * u)
+    for ln in ef.get("linhas", []):
+        pecas.append(("sans", _txt_molde(ln, fs, col, sh)))
+    if ef.get("script"):
+        ft = fonte("script", ef.get("tamanho_script", 96) * u)
+        img = _txt_molde(ef["script"], ft, col, sh, contorno=max(1, int(1.4 * u)))
+        letras = max(1, len(ef["script"]))
+        t_escrita = letras / ef.get("letras_por_s", 20)
+        frac = (t - ini) / t_escrita
+        saida = fim - 0.15
+        if t >= saida:  # o manuscrito sai primeiro, em 0,15 s
+            a = clamp((fim - t) / 0.15)
+            img = img.copy()
+            img.putalpha(img.getchannel("A").point(lambda v: int(v * a)))
+        pecas.append(("script", _revelar(img, frac)))
+        t_sub = ini + t_escrita + 0.25
+    else:
+        t_sub = ini
+    if ef.get("sub") and t >= t_sub:
+        pecas.append(("sub", _txt_molde(ef["sub"], fonte("jakarta", ef.get("tamanho_sub", 22) * u), col, sh)))
+    if not pecas:
+        return cv
+    # empilha centralizado; o manuscrito "encaixa" sob a sans (sobe 22% da própria altura)
+    alturas = []
+    for tipo, img in pecas:
+        h = img.height * (0.62 if tipo == "script" else 0.86 if tipo == "sans" else 0.9)
+        alturas.append(h)
+    total = sum(alturas)
+    y = ef.get("y", 0.62) * H - total / 2
+    for (tipo, img), h in zip(pecas, alturas):
+        colar(cv, img, W / 2, y + h / 2)
+        y += h
+    return cv
 
 # ---------------------------------------------------------------- render
 
