@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reels Funcionário Artificial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#eef1f7; --ink:#141824; --muted:#5b6478; --panel:#ffffff; --line:#d6dbe6; --accent:#2F7BFF;
+  /* cores do vídeo (fixas, não mudam com tema) */
+  --blue:#3B8BFF; --red:#FF4D5E; --green:#25D366; --night:#0B1020;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page:#07090f; --ink:#e9edf5; --muted:#8d97ad; --panel:#131826; --line:#252d40; }
+}
+:root[data-theme="dark"]{ --page:#07090f; --ink:#e9edf5; --muted:#8d97ad; --panel:#131826; --line:#252d40; }
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--page);color:var(--ink);font-family:Inter,system-ui,sans-serif;overflow:hidden}
+#wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px 16px}
+#viewport{position:relative;overflow:hidden;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);flex:none}
+#stage{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:0 0;overflow:hidden;background:var(--night);
+  font-family:Inter,system-ui,sans-serif;color:#fff}
+#cam{position:absolute;inset:0;transform-origin:0 0;will-change:transform}
+.scene{position:absolute;inset:0;overflow:hidden;opacity:0}
+.abs{position:absolute}
+.c{transform-origin:center center;will-change:transform,opacity}
+
+/* controles */
+#controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:520px;width:100%}
+#controls button{font:600 14px Inter,sans-serif;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer}
+#controls button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+#scrub{flex:1;min-width:140px;accent-color:var(--accent)}
+#time{font:600 13px ui-monospace,monospace;color:var(--muted);width:48px;text-align:right}
+body.capture #controls{display:none}
+body.capture #wrap{padding:0;display:block}
+body.capture #viewport{border-radius:0;box-shadow:none}
+
+/* elementos do vídeo */
+.digital{font-weight:900;letter-spacing:-2px;font-variant-numeric:tabular-nums}
+.bubble{border-radius:34px;padding:26px 30px 18px;font-size:40px;line-height:1.25;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.bubble.sent{background:#D9FDD3;color:#10221a;border-bottom-right-radius:8px}
+.bubble.in{background:#fff;color:#141824;border-bottom-left-radius:8px}
+.bubble.ai{background:#2F7BFF;color:#fff;border-bottom-right-radius:8px}
+.meta{display:flex;justify-content:flex-end;align-items:center;gap:8px;font-size:26px;font-weight:600;opacity:.7;margin-top:8px}
+.pill{border-radius:999px;font-weight:800;display:flex;align-items:center;gap:14px;white-space:nowrap}
+.card{background:#fff;color:#141824;border-radius:28px;display:flex;align-items:center;gap:24px;padding:0 28px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.av{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:36px;color:#fff;flex:none}
+.card .nm{font-size:36px;font-weight:800}
+.card .pv{font-size:29px;color:#5b6478;font-weight:600;display:flex;align-items:center;gap:8px}
+.card .rt{margin-left:auto;text-align:right;font-size:26px;color:#5b6478;font-weight:600}
+.badge{display:inline-flex;min-width:44px;height:44px;border-radius:22px;background:var(--green);color:#fff;font-weight:900;align-items:center;justify-content:center;font-size:26px;margin-top:6px}
+.label-up{font-size:34px;font-weight:900;letter-spacing:4px;text-transform:uppercase}
+
+#captions{position:absolute;left:40px;right:40px;top:1300px;height:260px;display:flex;flex-wrap:wrap;justify-content:center;align-content:flex-start;gap:0 22px;pointer-events:none}
+#captions span{display:inline-block;font-size:82px;font-weight:900;line-height:1.15;color:#fff;letter-spacing:-1px;
+  -webkit-text-stroke:12px #000;paint-order:stroke fill;text-shadow:0 6px 0 rgba(0,0,0,.35);transform-origin:center 70%}
+#captions span.k{color:var(--blue)}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.45))}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="viewport"><div id="stage">
+    <div id="cam">
+      <!-- A: relógio 9h → 13h + cliente esperando -->
+      <div class="scene" id="sA" style="background:radial-gradient(circle at 50% 30%,#1b2440,#0B1020 70%)">
+        <div class="abs c" id="aClock" style="left:340px;top:200px;width:400px;height:400px"></div>
+        <div class="abs c digital" id="aDigital" style="left:0;width:1080px;top:620px;text-align:center;font-size:96px">09:00</div>
+        <div class="abs c" id="aAna" style="left:10px;top:760px;width:420px;height:546px"></div>
+        <div class="abs c" id="aBubble" style="left:440px;top:800px;width:600px">
+          <div class="bubble sent">Oi! Quanto custa? Tem horário amanhã?
+            <div class="meta"><span>09:00</span><span id="aTicks"></span></div>
+          </div>
+        </div>
+        <div class="abs c" id="aVisto" style="left:640px;top:1040px;font-size:34px;font-weight:800;color:#6fb6ff">Visto às 09:01</div>
+        <div class="abs c pill" id="aPill" style="left:560px;top:1100px;padding:16px 30px;background:var(--red);font-size:36px">4h sem resposta</div>
+      </div>
+
+      <!-- B: perguntou pra mais 3 empresas -->
+      <div class="scene" id="sB" style="background:linear-gradient(180deg,#121a33,#0B1020)">
+        <div class="abs c" id="bAna" style="left:380px;top:200px;width:320px;height:416px"></div>
+        <div class="abs c card" id="bCard0" style="left:70px;top:640px;width:940px;height:118px">
+          <div class="av" style="background:#6b7387">S</div>
+          <div><div class="nm">Sua empresa</div><div class="pv"><span id="bTicks"></span>Visto · sem resposta</div></div>
+          <div class="rt">09:01</div>
+        </div>
+        <div class="abs c card" id="bCard1" style="left:70px;top:778px;width:940px;height:118px">
+          <div class="av" style="background:#f0a020">B</div>
+          <div><div class="nm">Loja B</div><div class="pv">Você: Oi! Quanto custa?</div></div>
+          <div class="rt">09:03</div>
+        </div>
+        <div class="abs c card" id="bCard2" style="left:70px;top:916px;width:940px;height:118px">
+          <div class="av" style="background:#25b06a">C</div>
+          <div><div class="nm">Loja C</div><div class="pv" id="bPrev2">Você: Oi! Quanto custa?</div></div>
+          <div class="rt">09:04<br><span class="badge" id="bBadge" style="opacity:0">1</span></div>
+        </div>
+        <div class="abs c card" id="bCard3" style="left:70px;top:1054px;width:940px;height:118px">
+          <div class="av" style="background:#9b59d0">D</div>
+          <div><div class="nm">Loja D</div><div class="pv">Você: Oi! Quanto custa?</div></div>
+          <div class="rt">09:05</div>
+        </div>
+        <div class="abs c" id="bStamp" style="left:560px;top:908px;padding:10px 26px;border:7px solid var(--green);color:var(--green);border-radius:16px;font-size:46px;font-weight:900;letter-spacing:2px;background:rgba(10,30,20,.85)">VENDA FECHADA</div>
+        <div class="abs c pill" id="bLost" style="left:600px;top:600px;padding:12px 26px;background:var(--red);font-size:32px">PERDEU A VENDA</div>
+      </div>
+
+      <!-- C: tela dividida + funcionário artificial -->
+      <div class="scene" id="sC" style="background:#0B1E3F">
+        <div class="abs" id="cLeft" style="left:0;top:0;width:540px;height:1920px;background:linear-gradient(180deg,#3a1220,#1a0910);overflow:hidden">
+          <div class="abs label-up" style="left:0;width:540px;top:300px;text-align:center;color:var(--red)">Sem resposta</div>
+          <div class="abs" id="cClock" style="left:100px;top:400px;width:340px;height:340px"></div>
+          <div class="abs digital" id="cDigital" style="left:0;width:540px;top:765px;text-align:center;font-size:80px">09:00</div>
+          <div class="abs c digital" id="cHoras" style="left:0;width:540px;top:880px;text-align:center;font-size:100px;color:var(--red)">4 HORAS</div>
+        </div>
+        <div class="abs" id="cRight" style="left:540px;top:0;width:540px;height:1920px;background:linear-gradient(180deg,#0f2a5c,#0B1530);overflow:hidden">
+          <div class="abs" id="cRightSplit" style="left:0;top:0;width:540px;height:1920px">
+            <div class="abs label-up" style="left:0;width:540px;top:300px;text-align:center;color:var(--blue)">Funcionário<br>artificial</div>
+            <svg class="abs" style="left:100px;top:420px" width="340" height="340" viewBox="0 0 340 340">
+              <circle cx="170" cy="170" r="150" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="22"/>
+              <circle id="cRing" cx="170" cy="170" r="150" fill="none" stroke="#3B8BFF" stroke-width="22" stroke-linecap="round"
+                stroke-dasharray="942.5" stroke-dashoffset="942.5" transform="rotate(-90 170 170)"/>
+            </svg>
+            <div class="abs digital" id="cSec" style="left:0;width:540px;top:530px;text-align:center;font-size:110px">0.0s</div>
+            <div class="abs c digital" id="cFour" style="left:0;width:540px;top:880px;text-align:center;font-size:100px;color:var(--blue)">4 SEG</div>
+          </div>
+        </div>
+        <div class="abs" id="cChat" style="left:0;top:0;width:1080px;height:1920px;opacity:0">
+          <div class="abs c" id="cBia" style="left:30px;top:220px;width:370px;height:481px"></div>
+          <div class="abs c" id="cName" style="left:420px;top:330px">
+            <div style="font-size:64px;font-weight:900">Bia</div>
+            <div style="font-size:34px;font-weight:800;color:var(--blue)">funcionária artificial</div>
+            <div style="font-size:30px;font-weight:600;color:#9fe6b8;margin-top:10px">● online · 24h</div>
+          </div>
+          <div class="abs c" id="cM1" style="left:60px;top:720px;max-width:720px"><div class="bubble in" style="font-size:36px">Oi! Quanto custa? Tem horário amanhã?</div></div>
+          <div class="abs c" id="cTyping" style="right:60px;top:860px;background:#2F7BFF;border-radius:30px;padding:22px 30px;display:flex;gap:12px">
+            <i class="dot" style="width:16px;height:16px;border-radius:50%;background:#fff;display:block"></i><i class="dot" style="width:16px;height:16px;border-radius:50%;background:#fff;display:block"></i><i class="dot" style="width:16px;height:16px;border-radius:50%;background:#fff;display:block"></i>
+          </div>
+          <div class="abs c" id="cR1" style="right:60px;top:860px"><div class="bubble ai" style="font-size:36px;padding:20px 28px 14px">Oi! Temos sim, amanhã tem vaga.<div class="meta" style="opacity:.85">respondido em 4s</div></div></div>
+          <div class="abs c" id="cR2" style="right:60px;top:985px"><div class="bubble ai" style="font-size:36px;padding:20px 28px">Corte + barba: <b>R$ 60</b></div></div>
+          <div class="abs c" id="cR3" style="right:60px;top:1085px;background:#fff;color:#141824;border-radius:28px;padding:20px 28px;display:flex;gap:20px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.3)">
+            <svg width="70" height="70" viewBox="0 0 70 70"><rect x="4" y="10" width="62" height="56" rx="10" fill="#eaf2ff" stroke="#2F7BFF" stroke-width="4"/><rect x="4" y="10" width="62" height="16" rx="6" fill="#2F7BFF"/><path d="M22 46 L31 54 L49 36" stroke="#25b06a" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div><div style="font-size:36px;font-weight:900">Agendado! Amanhã, 10:00</div><div style="font-size:28px;font-weight:700;color:#25b06a">Horário confirmado</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D: 23h de domingo -->
+      <div class="scene" id="sD" style="background:linear-gradient(180deg,#050816,#101a3a)">
+        <svg class="abs" id="dStars" width="1080" height="1920" style="left:0;top:0"></svg>
+        <svg class="abs" width="200" height="200" style="left:800px;top:200px"><circle cx="100" cy="100" r="70" fill="#f5e9b8"/><circle cx="130" cy="80" r="62" fill="#070b1c"/></svg>
+        <div class="abs label-up" style="left:80px;top:250px;color:#9fb4ff">Domingo</div>
+        <div class="abs digital" id="dTime" style="left:74px;top:290px;font-size:150px">23:07</div>
+        <div class="abs c" id="dBia" style="left:20px;top:520px;width:420px;height:546px"></div>
+        <div class="abs c" id="dN0" style="left:450px;top:540px;width:590px"></div>
+        <div class="abs c" id="dN1" style="left:450px;top:700px;width:590px"></div>
+        <div class="abs c" id="dN2" style="left:450px;top:860px;width:590px"></div>
+        <div class="abs c pill" id="dP0" style="left:150px;top:1040px;padding:14px 34px;background:rgba(59,139,255,.18);border:3px solid var(--blue);font-size:40px"></div>
+        <div class="abs c pill" id="dP1" style="left:150px;top:1130px;padding:14px 34px;background:rgba(59,139,255,.18);border:3px solid var(--blue);font-size:40px"></div>
+        <div class="abs c pill" id="dP2" style="left:150px;top:1220px;padding:14px 34px;background:rgba(59,139,255,.18);border:3px solid var(--blue);font-size:40px"></div>
+      </div>
+
+      <!-- E: Boa Vista -->
+      <div class="scene" id="sE" style="background:linear-gradient(180deg,#0B1E3F,#123b7a)">
+        <svg class="abs" width="1080" height="760" style="left:0;top:160px" viewBox="0 0 1080 760">
+          <g stroke="rgba(160,200,255,.18)" stroke-width="10" fill="none" stroke-linecap="round">
+            <path d="M-20 200 L1100 260"/><path d="M-20 420 L1100 380"/><path d="M-20 600 L1100 640"/>
+            <path d="M200 -20 L260 780"/><path d="M480 -20 L520 780"/><path d="M800 -20 L740 780"/>
+            <path d="M80 760 Q540 300 1000 0" stroke-width="6" stroke="rgba(160,200,255,.12)"/>
+          </g>
+          <path d="M1120 120 Q900 180 920 330 Q940 480 760 560 Q600 630 640 780" stroke="#3b7fd9" stroke-width="46" fill="none" stroke-linecap="round" opacity=".7"/>
+          <circle cx="540" cy="360" r="160" fill="rgba(59,139,255,.10)" id="ePulse"/>
+        </svg>
+        <svg class="abs c" id="ePin" width="150" height="200" viewBox="0 0 150 200" style="left:465px;top:330px">
+          <ellipse cx="75" cy="190" rx="34" ry="9" fill="rgba(0,0,0,.35)"/>
+          <path d="M75 186 C40 130 10 100 10 66 A65 65 0 0 1 140 66 C140 100 110 130 75 186Z" fill="#FF4D5E"/>
+          <circle cx="75" cy="66" r="26" fill="#fff"/>
+        </svg>
+        <div class="abs c pill" id="eLabel" style="left:310px;top:560px;padding:16px 38px;background:#fff;color:#0B1E3F;font-size:46px">Boa Vista · RR</div>
+        <div class="abs c" id="eCarlos" style="left:10px;top:700px;width:440px;height:572px"></div>
+        <div class="abs c digital" id="eJa" style="left:470px;top:780px;font-size:84px;letter-spacing:-2px">Já existe.</div>
+        <div class="abs c" id="eTag" style="left:500px;top:900px;width:520px;height:300px;transform-origin:60px 40px">
+          <svg width="520" height="300" viewBox="0 0 520 300" style="position:absolute;inset:0">
+            <path d="M60 10 L500 10 Q512 10 512 22 L512 278 Q512 290 500 290 L60 290 L8 150 Z" fill="#FFD84D"/>
+            <circle cx="60" cy="150" r="16" fill="#123b7a"/>
+          </svg>
+          <div style="position:absolute;left:110px;top:58px;color:#1a1500">
+            <div style="font-size:40px;font-weight:800">custa</div>
+            <div style="font-size:92px;font-weight:900;line-height:.95;letter-spacing:-2px">MENOS</div>
+            <div style="font-size:32px;font-weight:700">do que você imagina</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- F: CTA -->
+      <div class="scene" id="sF" style="background:radial-gradient(circle at 50% 40%,#16224a,#0B1020 70%)">
+        <div class="abs c" id="fCom" style="left:0;width:1080px;top:440px;text-align:center;font-size:110px;font-weight:900">Comenta</div>
+        <div class="abs c" id="fAgenda" style="left:0;width:1080px;top:560px;text-align:center;font-size:190px;font-weight:900;color:var(--blue);letter-spacing:4px">AGENDA</div>
+        <div class="abs c" id="fBox" style="left:70px;top:880px;width:940px;height:124px;border-radius:62px;background:#1c2440;border:2px solid #2e3a63;display:flex;align-items:center;padding:0 22px;gap:22px">
+          <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#f0a020,#ff4d5e);flex:none"></div>
+          <div id="fType" style="font-size:52px;font-weight:800;flex:1;color:#fff"></div>
+          <div id="fSend" style="width:84px;height:84px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;flex:none">
+            <svg width="40" height="40" viewBox="0 0 40 40"><path d="M6 20 L34 6 L26 34 L20 22 Z" fill="#fff"/></svg>
+          </div>
+        </div>
+        <div class="abs c" id="fSub" style="left:0;width:1080px;top:1050px;text-align:center;font-size:40px;font-weight:700;color:#aab6d6">que eu te mostro como funciona</div>
+        <svg class="abs c" id="fHeart" width="120" height="110" viewBox="0 0 24 22" style="left:880px;top:780px"><path d="M12 21 C5 15 1 11 1 6.5 A5.5 5.5 0 0 1 12 4 A5.5 5.5 0 0 1 23 6.5 C23 11 19 15 12 21Z" fill="#FF4D5E"/></svg>
+      </div>
+    </div>
+    <div id="vignette"></div>
+    <div id="captions"></div>
+    <div id="flash"></div>
+  </div></div>
+
+  <div id="controls">
+    <button id="bPlay">▶ Play</button>
+    <button id="bV1" class="on">V1 · Personagens</button>
+    <button id="bV2">V2 · Zoom dinâmico</button>
+    <button id="bSnd" class="on">Som</button>
+    <input type="range" id="scrub" min="0" max="30" step="0.01" value="0">
+    <span id="time">0.0s</span>
+  </div>
+</div>
+
+<script>
+const Q = new URLSearchParams(location.search);
+let V = Q.get('v') === '2' ? 2 : 1;
+const CAPTURE = Q.has('capture');
+if (CAPTURE) document.body.classList.add('capture');
+const DUR = 30;
+const $ = id => document.getElementById(id);
+
+/* ---------- matemática de animação ---------- */
+const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const P = (t, a, b) => cl((t - a) / (b - a));
+const lerp = (a, b, x) => a + (b - a) * x;
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const eo = x => 1 - Math.pow(1 - x, 3);
+const eexp = x => x >= 1 ? 1 : 1 - Math.pow(2, -10 * x);
+const eback = x => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+function S(el, o = {}) {
+  if (typeof el === 'string') el = $(el);
+  el.style.opacity = o.o ?? 1;
+  el.style.transform = `translate(${o.x || 0}px,${o.y || 0}px) scale(${o.s ?? 1}) rotate(${o.r || 0}deg)`;
+}
+// entrada com "pop": escala com overshoot + subida
+function pop(el, t, at, dur = .4, from = .6) {
+  const k = P(t, at, at + dur);
+  S(el, { o: cl(k * 3), s: lerp(from, 1, eback(k)), y: (1 - eo(k)) * 40 });
+}
+function slideIn(el, t, at, dur = .45, dx = 300) {
+  const k = eo(P(t, at, at + dur));
+  S(el, { o: cl(k * 2), x: (1 - k) * dx });
+}
+
+/* ---------- cores ---------- */
+function shade(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  const f = c => Math.round(cl(c + a * 255, 0, 255));
+  return '#' + [f(n >> 16), f((n >> 8) & 255), f(n & 255)].map(v => v.toString(16).padStart(2, '0')).join('');
+}
+
+/* ---------- personagens humanos (SVG) ---------- */
+function person(p) {
+  const sk = p.skin, sk2 = shade(sk, -.08), sk3 = shade(sk, -.2), hr = p.hair, hr2 = shade(hr, -.08);
+  const sh = p.shirt, sl = shade(sh, -.1);
+  let back = '', front = '';
+  if (p.hairStyle === 'long') {
+    back = `<path d="M106 200 Q92 370 122 410 Q200 432 278 410 Q308 370 294 200 Q292 96 200 88 Q108 96 106 200Z" fill="${hr}"/>`;
+    front = `<path d="M110 214 Q98 90 200 84 Q302 90 290 214 Q284 150 252 126 Q204 172 128 150 Q114 172 110 214Z" fill="${hr}"/>`;
+  } else if (p.hairStyle === 'bun') {
+    back = `<circle cx="200" cy="80" r="44" fill="${hr}"/>`;
+    front = `<path d="M112 206 Q102 92 200 88 Q298 92 288 206 Q282 146 248 128 Q200 146 152 128 Q118 146 112 206Z" fill="${hr}"/>`;
+  } else if (p.hairStyle === 'curly') {
+    for (let i = 0; i <= 12; i++) {
+      const a = Math.PI * (1.02 + i * 0.08), x = 200 + 96 * Math.cos(a), y = 196 + 104 * Math.sin(a);
+      back += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="34" fill="${hr}"/>`;
+    }
+    front = `<path d="M118 190 Q120 112 200 108 Q280 112 282 190 Q262 140 200 140 Q138 140 118 190Z" fill="${hr}"/>`;
+  } else {
+    front = `<path d="M114 198 Q104 90 200 86 Q298 90 286 198 Q284 150 262 130 Q200 150 138 130 Q116 150 114 198Z" fill="${hr}"/>`;
+  }
+  const beard = p.beard ? `<path d="M128 240 Q132 318 200 330 Q268 318 272 240 Q262 290 200 296 Q138 290 128 240Z" fill="${hr2}" opacity=".9"/>` : '';
+  const apron = p.apron ? `<path d="M150 392 L250 392 L268 520 L132 520Z" fill="#2b2f3a"/><path d="M162 392 L176 360 M238 392 L224 360" stroke="#2b2f3a" stroke-width="10"/>` : '';
+  const badge = p.ai ? `<g><rect x="120" y="440" width="76" height="42" rx="12" fill="#2F7BFF"/><text x="158" y="470" font-family="Inter,sans-serif" font-size="26" font-weight="900" fill="#fff" text-anchor="middle">IA</text></g>` : '';
+  const headset = p.headset ? `<path d="M110 214 Q106 92 200 90 Q294 92 290 214" stroke="#1d2436" stroke-width="13" fill="none"/>
+    <rect x="96" y="194" width="28" height="50" rx="12" fill="#1d2436"/><rect x="276" y="194" width="28" height="50" rx="12" fill="#1d2436"/>
+    <path d="M290 238 Q286 290 228 288" stroke="#1d2436" stroke-width="7" fill="none"/><circle cx="226" cy="288" r="9" fill="#3B8BFF"/>` : '';
+  const phone = p.phone === false ? '' : `<g class="arm">
+    <path d="M338 520 Q334 462 300 428" stroke="${sl}" stroke-width="58" fill="none" stroke-linecap="round"/>
+    <g transform="rotate(-10 292 370)"><rect x="252" y="304" width="80" height="136" rx="15" fill="#1b1f2e"/>
+    <rect class="scr" x="259" y="313" width="66" height="116" rx="10" fill="#7fb3ff"/></g>
+    <circle cx="296" cy="424" r="26" fill="${sk}"/></g>`;
+  return `<svg viewBox="0 0 400 520" width="100%" height="100%" style="overflow:visible">
+    <defs><radialGradient id="g_${p.id}" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="${p.glow || 'transparent'}" stop-opacity=".55"/><stop offset="1" stop-color="${p.glow || 'transparent'}" stop-opacity="0"/></radialGradient></defs>
+    ${p.glow ? `<circle cx="200" cy="250" r="240" fill="url(#g_${p.id})"/>` : ''}
+    ${back}
+    <path d="M40 520 Q46 404 140 376 Q200 398 260 376 Q354 404 360 520Z" fill="${sh}"/>
+    ${apron}${badge}
+    <path d="M170 288 L170 370 Q200 396 230 370 L230 288Z" fill="${sk2}"/>
+    <path d="M162 376 L200 418 L238 376" fill="none" stroke="${sl}" stroke-width="7" stroke-linejoin="round"/>
+    <ellipse cx="116" cy="218" rx="14" ry="22" fill="${sk}"/><ellipse cx="284" cy="218" rx="14" ry="22" fill="${sk}"/>
+    <ellipse cx="200" cy="205" rx="84" ry="102" fill="${sk}"/>
+    ${beard}
+    <g class="eyes"><ellipse cx="166" cy="212" rx="9" ry="11" fill="#1d1d28"/><ellipse cx="234" cy="212" rx="9" ry="11" fill="#1d1d28"/>
+      <circle cx="169" cy="208" r="3" fill="#fff"/><circle cx="237" cy="208" r="3" fill="#fff"/></g>
+    <g class="br-n"><path d="M148 186 Q166 176 184 184" stroke="${hr2}" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M216 184 Q234 176 252 186" stroke="${hr2}" stroke-width="7" fill="none" stroke-linecap="round"/></g>
+    <g class="br-w" style="display:none"><path d="M148 184 Q166 186 184 174" stroke="${hr2}" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M216 174 Q234 186 252 184" stroke="${hr2}" stroke-width="7" fill="none" stroke-linecap="round"/></g>
+    <path d="M200 222 Q193 244 203 248" stroke="${sk3}" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <circle cx="148" cy="250" r="15" fill="#ff7b7b" opacity=".22"/><circle cx="252" cy="250" r="15" fill="#ff7b7b" opacity=".22"/>
+    <path class="m-n" d="M182 272 Q200 279 218 272" stroke="#7a2530" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path class="m-h" style="display:none" d="M172 262 Q200 304 228 262 Q200 274 172 262Z" fill="#7a2530"/>
+    <path class="m-w" style="display:none" d="M182 282 Q200 266 218 282" stroke="#7a2530" stroke-width="6" fill="none" stroke-linecap="round"/>
+    ${front}${headset}${phone}
+  </svg>`;
+}
+function setExpr(el, e) {
+  el = typeof el === 'string' ? $(el) : el;
+  if (el._e === e) return; el._e = e;
+  el.querySelector('.m-n').style.display = e === 'n' ? '' : 'none';
+  el.querySelector('.m-h').style.display = e === 'h' ? '' : 'none';
+  el.querySelector('.m-w').style.display = e === 'w' ? '' : 'none';
+  el.querySelector('.br-w').style.display = e === 'w' ? '' : 'none';
+  el.querySelector('.br-n').style.display = e === 'w' ? 'none' : '';
+}
+// piscada + respiração + olhar
+function alive(el, t, seed = 0, look = 0) {
+  el = typeof el === 'string' ? $(el) : el;
+  const ph = (t + seed) % 3.3, b = ph < .13 ? Math.abs(Math.cos(ph / .13 * Math.PI)) : 1;
+  el.querySelector('.eyes').setAttribute('transform', `translate(0 ${212 + look}) scale(1 ${Math.max(.08, b)}) translate(0 -212)`);
+  el.querySelector('svg').style.transform = `translateY(${Math.sin((t + seed) * 2.2) * 4}px)`;
+}
+
+const ANA = { skin: '#c98e6b', hair: '#3a2418', hairStyle: 'long', shirt: '#e8566b' };
+const BIA = { skin: '#8d5a3f', hair: '#1c1210', hairStyle: 'curly', shirt: '#1f3d7a', headset: true, ai: true, glow: '#3B8BFF' };
+const CARLOS = { skin: '#e0b08f', hair: '#2a1d16', hairStyle: 'short', shirt: '#f2f2f2', beard: true, apron: true, phone: false };
+$('aAna').innerHTML = person({ ...ANA, id: 'a' });
+$('bAna').innerHTML = person({ ...ANA, id: 'b' });
+$('cBia').innerHTML = person({ ...BIA, id: 'c' });
+$('dBia').innerHTML = person({ ...BIA, id: 'd' });
+$('eCarlos').innerHTML = person({ ...CARLOS, id: 'e' });
+
+/* ---------- relógios e ticks ---------- */
+function clockSVG(id, size, accent) {
+  let ticks = '';
+  for (let i = 0; i < 12; i++) {
+    const a = i * 30 * Math.PI / 180, r1 = i % 3 ? 150 : 138;
+    ticks += `<line x1="${200 + r1 * Math.sin(a)}" y1="${200 - r1 * Math.cos(a)}" x2="${200 + 164 * Math.sin(a)}" y2="${200 - 164 * Math.cos(a)}" stroke="#2a3350" stroke-width="${i % 3 ? 5 : 10}" stroke-linecap="round"/>`;
+  }
+  return `<svg viewBox="0 0 400 400" width="${size}" height="${size}">
+    <circle cx="200" cy="200" r="190" fill="#121a30" stroke="${accent}" stroke-width="12" id="${id}Rim"/>
+    <circle cx="200" cy="200" r="176" fill="#f7f9ff"/>
+    <g opacity=".8">${ticks}</g>
+    <line id="${id}H" x1="200" y1="210" x2="200" y2="105" stroke="#141824" stroke-width="16" stroke-linecap="round"/>
+    <line id="${id}M" x1="200" y1="220" x2="200" y2="58" stroke="#141824" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="200" cy="200" r="14" fill="${accent}"/>
+  </svg>`;
+}
+$('aClock').innerHTML = clockSVG('ak', 400, '#3B8BFF');
+$('cClock').innerHTML = clockSVG('ck', 340, '#FF4D5E');
+function setClock(id, h) {
+  $(id + 'M').setAttribute('transform', `rotate(${(h % 1) * 360} 200 200)`);
+  $(id + 'H').setAttribute('transform', `rotate(${(h % 12) * 30} 200 200)`);
+}
+const fmt = h => { const H = Math.floor(h), M = Math.floor((h - H) * 60); return String(H).padStart(2, '0') + ':' + String(M).padStart(2, '0'); };
+const ticksSVG = id => `<svg viewBox="0 0 30 18" width="40" height="24"><path id="${id}" d="M2 10 L6 14 L14 4 M12 12 L14 14 L24 4" stroke="#8a96a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+$('aTicks').innerHTML = ticksSVG('aT');
+$('bTicks').innerHTML = ticksSVG('bT'); $('bT').setAttribute('stroke', '#34B7F1');
+
+/* ---------- conteúdos da cena D ---------- */
+const chk = c => `<svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="${c}"/><path d="M12 22 L19 29 L32 15" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+['Não esquece', 'Não tira folga', 'Ninguém no vácuo'].forEach((s, i) => $('dP' + i).innerHTML = chk('#3B8BFF') + s);
+[['23:07', 'Vocês abrem amanhã?'], ['23:09', 'Quanto fica a escova?'], ['23:12', 'Dá pra remarcar pra sexta?']].forEach(([h, m], i) => {
+  $('dN' + i).innerHTML = `<div class="bubble in" style="font-size:32px;padding:18px 24px 12px;display:inline-block">${m}<div class="meta" style="justify-content:flex-start">${h}</div></div>
+   <div class="pill" id="dC${i}" style="margin-top:10px;margin-left:120px;padding:10px 22px;background:#123e2a;color:#7ff0ad;font-size:28px;display:inline-flex">${chk('#25b06a').replace(/44/g, '32')} respondido em 3s</div>`;
+});
+{ // estrelas com semente fixa (render determinístico)
+  let s = 7, r = () => (s = (s * 9301 + 49297) % 233280) / 233280, h = '';
+  for (let i = 0; i < 60; i++) h += `<circle class="st" cx="${(r() * 1080).toFixed(0)}" cy="${(r() * 1000).toFixed(0)}" r="${(1 + r() * 3).toFixed(1)}" fill="#fff" data-p="${(r() * 6).toFixed(2)}"/>`;
+  $('dStars').innerHTML = h;
+}
+const stars = [...document.querySelectorAll('#dStars .st')];
+
+/* ---------- legendas palavra a palavra ---------- */
+const SEGS = [
+  [0.15, 2.0, 'Esse cliente mandou mensagem às 9h e só foi respondido às 13h.'],
+  [2.0, 8.0, 'Enquanto isso, ele perguntou pra mais três empresas. Quem respondeu primeiro levou a venda.'],
+  [8.0, 15.0, 'Agora olha a mesma mensagem com um funcionário artificial: 4 segundos. Ele responde, tira a dúvida, manda o preço e já marca o horário.'],
+  [15.0, 22.0, 'Ele não esquece, não tira folga e não deixa ninguém no vácuo às 23h de domingo.'],
+  [22.0, 28.0, 'Isso já existe, aqui em Boa Vista, e custa menos do que você imagina.'],
+  [28.0, 29.45, 'Comenta AGENDA que eu te mostro como funciona.'],
+];
+const KEY = new Set(['9h', '13h', 'três', 'primeiro', 'venda', 'funcionário', 'artificial', '4', 'segundos', 'preço', 'horário',
+  'esquece', 'folga', 'vácuo', '23h', 'domingo', 'boa', 'vista', 'menos', 'agenda']);
+const WORDS = [], CHUNKS = [];
+SEGS.forEach(([a, b, txt]) => {
+  const ws = txt.split(' '), wt = ws.map(w => w.length + 3), tot = wt.reduce((x, y) => x + y, 0);
+  let acc = a, chunk = [];
+  ws.forEach((w, i) => {
+    const d = (b - a) * wt[i] / tot;
+    const word = { w, t: acc, k: KEY.has(w.toLowerCase().replace(/[.,:!?]/g, '')) };
+    acc += d; WORDS.push(word); chunk.push(word);
+    const len = chunk.reduce((x, c) => x + c.w.length + 1, 0);
+    if (len > 15 || /[.,:]$/.test(w) || i === ws.length - 1) { CHUNKS.push({ words: chunk, end: i === ws.length - 1 ? b : null }); chunk = []; }
+  });
+});
+CHUNKS.forEach((c, i) => { c.start = c.words[0].t; if (c.end == null) c.end = CHUNKS[i + 1] ? null : c.start + 1; });
+CHUNKS.forEach((c, i) => { if (c.end == null) c.end = CHUNKS[i + 1].start; });
+const capEl = $('captions');
+function renderCaptions(t) {
+  const c = CHUNKS.find(c => t >= c.start && t < c.end);
+  if (!c) { if (capEl._c !== null) { capEl.innerHTML = ''; capEl._c = null; } return; }
+  if (capEl._c !== c) {
+    capEl._c = c;
+    capEl.innerHTML = c.words.map(w => `<span class="${w.k ? 'k' : ''}">${w.w}</span>`).join('');
+  }
+  [...capEl.children].forEach((sp, i) => {
+    const w = c.words[i], k = P(t, w.t, w.t + .16);
+    const big = V === 2 ? .35 : .18;
+    sp.style.opacity = t >= w.t ? 1 : 0;
+    sp.style.transform = `scale(${t >= w.t ? lerp(1 + big, 1, eo(k)) : .8}) translateY(${(1 - eo(k)) * 14}px)`;
+  });
+}
+
+/* ---------- câmera (V1 suave · V2 zoom dinâmico) ---------- */
+// key: [tempo, escala, foco x, foco y, easing até este ponto]
+const CAM = {
+  1: [[0, 1, 540, 960], [2.0, 1.04, 540, 900, 'io'], [2.5, 1.45, 880, 990, 'io'], [3.59, 1.5, 890, 995, 'io'],
+      [3.6, 1, 540, 960, 'cut'], [7.99, 1.06, 540, 900, 'io'],
+      [8, 1, 540, 960, 'cut'], [14.99, 1.04, 540, 900, 'io'],
+      [15, 1.04, 540, 960, 'cut'], [21.99, 1, 540, 960, 'io'],
+      [22, 1, 540, 960, 'cut'], [27.99, 1.06, 540, 900, 'io'],
+      [28, 1, 540, 960, 'cut'], [30, 1, 540, 960, 'io']],
+  2: [[0, 1, 540, 960], [1.8, 1.16, 540, 600, 'io'], [2.0, 2.6, 905, 995, 'exp'], [3.45, 2.75, 905, 995, 'io'], [3.59, 1.1, 540, 960, 'exp'],
+      [3.6, 1.18, 540, 900, 'cut'], [3.9, 1, 540, 960, 'exp'], [5.75, 1.03, 540, 960, 'io'], [6.0, 1.65, 640, 975, 'exp'], [6.9, 1.7, 700, 975, 'io'],
+      [7.1, 1.55, 680, 700, 'exp'], [7.99, 1.62, 700, 700, 'io'],
+      [8, 1.2, 540, 960, 'cut'], [8.3, 1, 540, 960, 'exp'], [9.85, 1.02, 540, 960, 'io'], [10.05, 1.7, 810, 900, 'exp'], [10.7, 1.75, 810, 900, 'io'],
+      [11.0, 1, 540, 960, 'exp'], [12.3, 1.02, 540, 960, 'io'], [12.45, 1.3, 760, 900, 'exp'], [13.15, 1.3, 760, 980, 'io'],
+      [13.95, 1.32, 740, 1050, 'io'], [14.1, 1.55, 740, 1140, 'exp'], [14.99, 1.6, 740, 1140, 'io'],
+      [15, 1.25, 400, 600, 'cut'], [16.0, 1, 540, 960, 'io'], [21.99, 1.12, 540, 1000, 'io'],
+      [22, 2.2, 540, 450, 'cut'], [23.3, 2.0, 540, 480, 'io'], [24.0, 1, 540, 960, 'exp'], [25.2, 1.04, 540, 960, 'io'], [25.4, 1.45, 760, 1020, 'exp'], [27.99, 1.5, 760, 1030, 'io'],
+      [28, 1.3, 540, 700, 'cut'], [28.35, 1, 540, 960, 'exp'], [29.0, 1.03, 540, 960, 'io'], [29.15, 1.25, 540, 940, 'exp'], [30, 1, 540, 960, 'io']],
+};
+const PULSES = { 1: [], 2: [[16.4, .07], [17.7, .07], [19.6, .07], [22.8, 0], [28.9, .05]] };
+const SHAKES = { 1: [[6.6, 6]], 2: [[2.0, 14], [6.6, 22], [10.05, 16], [14.1, 12], [23.35, 18], [29.15, 10]] };
+const CUTS = [3.6, 8, 15, 22, 28];
+const EASES = { io: eio, exp: eexp, cut: () => 1 };
+function camAt(t) {
+  const K = CAM[V];
+  let i = K.findIndex(k => k[0] > t);
+  if (i === -1) i = K.length - 1;
+  const a = K[Math.max(0, i - 1)], b = K[i];
+  let x = a[0] === b[0] ? 1 : P(t, a[0], b[0]);
+  x = b[4] === 'cut' ? (t >= b[0] ? 1 : 0) : EASES[b[4] || 'io'](x);
+  let s = lerp(a[1], b[1], x), fx = lerp(a[2], b[2], x), fy = lerp(a[3], b[3], x);
+  PULSES[V].forEach(([pt, amp]) => { if (t >= pt) s *= 1 + amp * Math.exp(-(t - pt) * 9); });
+  let ox = 0, oy = 0, blur = 0, rot = 0;
+  SHAKES[V].forEach(([st, amp]) => { if (t >= st) { const e = amp * Math.exp(-(t - st) * 9); ox += e * Math.sin(t * 90); oy += e * Math.cos(t * 77); rot += e * .04 * Math.sin(t * 60); } });
+  if (V === 2) CUTS.forEach(c => { // whip pan: desfoque + deslize na troca de cena
+    const d = t - c;
+    if (d > -.14 && d < .14) { const k = 1 - Math.abs(d) / .14; blur += 22 * k; ox += (d < 0 ? -1 : 1) * -260 * k * k; }
+  });
+  s = Math.max(1, s); // nunca mostra borda
+  fx = cl(fx, 540 / s, 1080 - 540 / s); fy = cl(fy, 960 / s, 1920 - 960 / s);
+  return { s, fx, fy, ox, oy, blur, rot };
+}
+
+/* ---------- cenas ---------- */
+const SC = [['sA', 0, 3.6], ['sB', 3.6, 8], ['sC', 8, 15], ['sD', 15, 22], ['sE', 22, 28], ['sF', 28, 30]];
+function sceneOp(t, a, b) {
+  const f = V === 1 ? .3 : 0;
+  if (f === 0) return t >= a && t < b ? 1 : 0;
+  const i = a === 0 ? 1 : cl((t - (a - f / 2)) / f), o = b >= 30 ? 1 : 1 - cl((t - (b - f / 2)) / f);
+  return Math.min(i, o);
+}
+
+function drawA(t) {
+  const h = 9 + 4 * eio(P(t, .35, 1.75));
+  setClock('ak', h);
+  $('aDigital').textContent = fmt(h);
+  const late = P(t, 1.5, 1.8);
+  $('aDigital').style.color = late > 0 ? `rgb(255,${Math.round(lerp(255, 77, late))},${Math.round(lerp(255, 94, late))})` : '#fff';
+  $('akRim').setAttribute('stroke', t > 1.6 ? '#FF4D5E' : '#3B8BFF');
+  S('aClock', { s: 1 + .03 * Math.sin(P(t, .35, 1.75) * Math.PI * 8) * (t < 1.75 && t > .35 ? 1 : 0) });
+  S('aDigital');
+  setExpr('aAna', t < 1.2 ? 'n' : 'w');
+  alive('aAna', t, 0, 6);
+  S('aAna'); S('aBubble');
+  $('aT').setAttribute('stroke', t >= 2.0 ? '#34B7F1' : '#8a96a8');
+  if (t < 2.0) S('aVisto', { o: 0 }); else pop('aVisto', t, 2.0, .3, .8);
+  if (t < 1.75) S('aPill', { o: 0 }); else pop('aPill', t, 1.75);
+}
+function drawB(t) {
+  const u = t - 3.6;
+  setExpr('bAna', u < 3.0 ? 'n' : 'h'); alive('bAna', t, 1.1, 6);
+  pop('bAna', u, 0, .4, .85);
+  slideIn('bCard0', u, 0, .35, -200);
+  ['bCard1', 'bCard2', 'bCard3'].forEach((id, i) => slideIn(id, u, .25 + i * .4));
+  const rep = u >= 2.2;
+  $('bPrev2').innerHTML = rep ? '<b style="color:#1a9e55">Temos sim! Amanhã 10h?</b>' : 'Você: Oi! Quanto custa?';
+  $('bBadge').style.opacity = rep ? 1 : 0;
+  const hl = eback(P(u, 2.2, 2.6));
+  if (rep) { const c = $('bCard2'); c.style.transform = `scale(${lerp(1, 1.04, hl)})`; c.style.boxShadow = `0 0 0 ${6 * hl}px #25D366, 0 8px 24px rgba(0,0,0,.25)`; }
+  else $('bCard2').style.boxShadow = '';
+  const dim = 1 - .55 * P(u, 3.0, 3.4);
+  ['bCard1', 'bCard3'].forEach(id => $(id).style.opacity = Math.min(+$(id).style.opacity, dim));
+  if (u < 3.0) S('bStamp', { o: 0 }); else { const k = P(u, 3.0, 3.25); S('bStamp', { o: cl(k * 2), s: lerp(2.4, 1, eo(k)), r: -8 }); }
+  if (u < 3.4) S('bLost', { o: 0 }); else pop('bLost', u, 3.4);
+  if (u >= 3.4) { $('bCard0').style.boxShadow = `0 0 0 ${6 * P(u, 3.4, 3.6)}px #FF4D5E, 0 8px 24px rgba(0,0,0,.25)`; }
+  else $('bCard0').style.boxShadow = '';
+}
+function drawC(t) {
+  const u = t - 8;
+  const h = 9 + 4 * eio(P(u, .3, 2.0));
+  setClock('ck', h); $('cDigital').textContent = fmt(h);
+  if (u < 2.0) S('cHoras', { o: 0 }); else pop('cHoras', u, 2.0);
+  const sec = 4 * P(u, .3, 1.85);
+  $('cSec').textContent = sec >= 4 ? '4s' : sec.toFixed(1) + 's';
+  $('cRing').setAttribute('stroke-dashoffset', 942.5 * (1 - sec / 4));
+  if (u < 1.85) S('cFour', { o: 0 }); else pop('cFour', u, 1.85, .4, .4);
+  // expansão: o lado artificial "engole" a tela
+  const e = eio(P(u, 2.8, 3.3));
+  $('cLeft').style.transform = `translateX(${-540 * e}px)`;
+  $('cRight').style.left = 540 * (1 - e) + 'px';
+  $('cRight').style.width = 540 + 540 * e + 'px';
+  $('cRightSplit').style.opacity = 1 - P(u, 2.8, 3.1);
+  $('cChat').style.opacity = P(u, 3.1, 3.4);
+  setExpr('cBia', 'h'); alive('cBia', t, 2, 6);
+  pop('cBia', u, 3.1, .5, .8); pop('cName', u, 3.3, .4, .8);
+  slideIn('cM1', u, 3.5, .35, -200);
+  $('cTyping').style.display = u >= 3.9 && u < 4.3 ? 'flex' : 'none';
+  [...$('cTyping').children].forEach((d, i) => d.style.transform = `translateY(${-8 * Math.max(0, Math.sin(u * 14 - i))}px)`);
+  pop('cTyping', u, 3.9, .25);
+  [['cR1', 4.3], ['cR2', 5.2], ['cR3', 6.0]].forEach(([id, at]) => { if (u < at) S(id, { o: 0 }); else pop(id, u, at, .4, .7); });
+}
+function drawD(t) {
+  const u = t - 15;
+  $('dTime').textContent = '23:' + String(7 + Math.floor(P(u, 0, 7) * 6)).padStart(2, '0');
+  stars.forEach(s => s.setAttribute('opacity', (.4 + .6 * Math.abs(Math.sin(t * 1.5 + +s.dataset.p))).toFixed(2)));
+  setExpr('dBia', 'h'); alive('dBia', t, .5, 6); S('dBia');
+  [.4, 2.4, 4.4].forEach((at, i) => {
+    if (u < at) S('dN' + i, { o: 0 }); else slideIn('dN' + i, u, at, .4, 260);
+    const c = $('dC' + i); const k = P(u, at + .6, at + .9);
+    c.style.opacity = k > 0 ? 1 : 0; c.style.transform = `scale(${lerp(.5, 1, eback(k))})`;
+  });
+  [1.4, 2.7, 4.6].forEach((at, i) => { if (u < at) S('dP' + i, { o: 0 }); else pop('dP' + i, u, at, .4, .5); });
+}
+function drawE(t) {
+  const u = t - 22;
+  const k = P(u, 1.0, 1.45);
+  S('ePin', { o: u < 1.0 ? 0 : 1, y: u < 1.0 ? -400 : lerp(-500, 0, k * k) - (k >= 1 ? 30 * Math.abs(Math.sin((u - 1.45) * 9)) * Math.exp(-(u - 1.45) * 5) : 0) });
+  $('ePulse').setAttribute('r', 60 + 140 * P(u, 1.45, 2.4));
+  $('ePulse').setAttribute('opacity', u < 1.45 ? 0 : 1 - P(u, 1.45, 2.4));
+  if (u < 1.6) S('eLabel', { o: 0 }); else pop('eLabel', u, 1.6);
+  setExpr('eCarlos', 'h'); alive('eCarlos', t, 1.7, 0);
+  slideInUp('eCarlos', u, .4);
+  if (u < .3) S('eJa', { o: 0 }); else pop('eJa', u, .3);
+  if (u < 3.4) S('eTag', { o: 0 });
+  else { const q = u - 3.4; S('eTag', { o: cl(q * 5), r: 14 * Math.exp(-q * 2.2) * Math.cos(q * 7) - 4, y: (1 - eo(P(q, 0, .3))) * -80 }); }
+}
+function slideInUp(id, t, at) { const k = eo(P(t, at, at + .5)); S(id, { o: cl(k * 2), y: (1 - k) * 220 }); }
+function drawF(t) {
+  const u = t - 28;
+  pop('fCom', u, 0, .35, .7); pop('fAgenda', u, .12, .45, .3);
+  slideInUp('fBox', u, .2);
+  const n = Math.floor(P(u, .35, .95) * 6);
+  $('fType').innerHTML = 'AGENDA'.slice(0, n) + (n < 6 && Math.floor(u * 4) % 2 === 0 ? '<span style="opacity:.7">|</span>' : '');
+  const sp = P(u, 1.0, 1.25);
+  $('fSend').style.transform = `scale(${1 + .25 * Math.sin(sp * Math.PI)})`;
+  if (u < .5) S('fSub', { o: 0 }); else pop('fSub', u, .5, .4, .9);
+  if (u < 1.15) S('fHeart', { o: 0 }); else { const q = u - 1.15; S('fHeart', { o: 1 - P(q, .4, .55), s: eback(P(q, 0, .3)), y: -120 * eo(P(q, 0, .55)) }); }
+}
+const DRAW = { sA: drawA, sB: drawB, sC: drawC, sD: drawD, sE: drawE, sF: drawF };
+
+/* ---------- render principal ---------- */
+const stageEl = $('stage'), camEl = $('cam'), flashEl = $('flash');
+function render(t) {
+  t = ((t % DUR) + DUR) % DUR;
+  SC.forEach(([id, a, b]) => {
+    let op = sceneOp(t, a, b), lt = t;
+    if (id === 'sA' && t >= 29.45) { op = eio(P(t, 29.45, 29.95)); lt = 0; } // loop: volta pro relógio das 9h
+    const el = $(id);
+    el.style.opacity = op;
+    el.style.zIndex = id === 'sA' && t > 29 ? 5 : 1;
+    el.style.display = op > 0 ? '' : 'none';
+    if (op > 0) DRAW[id](lt);
+  });
+  const c = camAt(t);
+  camEl.style.transform = `translate(${540 + c.ox}px,${960 + c.oy}px) rotate(${c.rot}deg) scale(${c.s}) translate(${-c.fx}px,${-c.fy}px)`;
+  camEl.style.filter = c.blur > .5 ? `blur(${c.blur.toFixed(1)}px)` : '';
+  let fl = 0;
+  if (V === 2) [2.0, 8, 15, 22, 28].forEach(x => { if (t >= x) fl = Math.max(fl, .55 * Math.exp(-(t - x) * 14)); });
+  flashEl.style.opacity = fl;
+  renderCaptions(t);
+}
+
+/* ---------- sons (eventos usados no preview e no MP4) ---------- */
+function events() {
+  const ev = [];
+  for (let x = .35; x < 1.75; x += .07) ev.push([x, 'tick']);
+  ev.push([2.0, 'ping']);
+  [3.6, 3.85, 4.25, 4.65].forEach(x => ev.push([x, 'pop']));
+  ev.push([5.8, 'ping'], [6.6, 'thud'], [7.0, 'low']);
+  for (let x = 8.3; x < 10; x += .06) ev.push([x, 'tick']);
+  ev.push([9.85, 'ding'], [11.5, 'pop'], [12.3, 'ping'], [13.2, 'ping'], [14.0, 'ding']);
+  [15.4, 17.4, 19.4].forEach(x => ev.push([x, 'ping']));
+  [16.4, 17.7, 19.6].forEach(x => ev.push([x, 'pop']));
+  ev.push([23.0, 'drop'], [23.45, 'thud'], [25.4, 'ding']);
+  for (let i = 0; i < 6; i++) ev.push([28.35 + i * .1, 'type']);
+  ev.push([29.1, 'pop'], [29.2, 'ping']);
+  if (V === 2) CUTS.forEach(c => ev.push([c - .12, 'whoosh']));
+  return ev.sort((a, b) => a[0] - b[0]);
+}
+window.__render = render;
+window.__events = events;
+
+/* ---------- player (preview) ---------- */
+let playing = false, t0 = 0, cur = 0, last = 0, ac = null, snd = true;
+function fit() {
+  const vp = $('viewport');
+  if (CAPTURE) { vp.style.width = '1080px'; vp.style.height = '1920px'; return; }
+  const k = Math.min((innerWidth - 32) / 1080, (innerHeight - 90) / 1920);
+  vp.style.width = 1080 * k + 'px'; vp.style.height = 1920 * k + 'px';
+  stageEl.style.transform = `scale(${k})`;
+}
+addEventListener('resize', fit); fit();
+function tone(type, when) {
+  const g = ac.createGain(); g.connect(ac.destination);
+  const osc = (f, a, d, wt = 'sine', f2) => { const o = ac.createOscillator(), gg = ac.createGain(); o.type = wt; o.frequency.setValueAtTime(f, when); if (f2) o.frequency.exponentialRampToValueAtTime(f2, when + d); gg.gain.setValueAtTime(a, when); gg.gain.exponentialRampToValueAtTime(.0001, when + d); o.connect(gg).connect(g); o.start(when); o.stop(when + d + .02); };
+  const noise = (a, d, hp) => { const b = ac.createBuffer(1, ac.sampleRate * d, ac.sampleRate), ch = b.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / ch.length, 2); const s = ac.createBufferSource(); s.buffer = b; const f = ac.createBiquadFilter(); f.type = hp ? 'highpass' : 'bandpass'; f.frequency.value = hp || 800; const gg = ac.createGain(); gg.gain.value = a; s.connect(f).connect(gg).connect(g); s.start(when); };
+  ({ tick: () => noise(.25, .02, 3000), type: () => noise(.3, .03, 2000), ping: () => { osc(1318, .25, .12); setTimeout(() => 0); osc(1760, .25, .35, 'sine'); },
+    pop: () => osc(400, .3, .08, 'sine', 900), thud: () => { osc(110, .7, .3, 'sine', 45); noise(.3, .1, 0); }, low: () => osc(220, .25, .4, 'triangle', 160),
+    ding: () => { osc(1046, .22, .9); osc(2093, .08, .6); }, drop: () => osc(1200, .12, .4, 'sine', 300), whoosh: () => noise(.5, .3, 0) })[type]();
+}
+function frame(now) {
+  if (!playing) return;
+  const t = ((now - t0) / 1000) % DUR;
+  if (snd && ac) events().forEach(([et, ty]) => { if ((last <= t && et > last && et <= t) || (t < last && (et > last || et <= t))) tone(ty, ac.currentTime); });
+  last = t; cur = t; render(t); $('scrub').value = t; $('time').textContent = t.toFixed(1) + 's';
+  requestAnimationFrame(frame);
+}
+$('bPlay').onclick = () => {
+  playing = !playing; $('bPlay').textContent = playing ? '❚❚ Pausar' : '▶ Play';
+  if (playing) { if (!ac) try { ac = new AudioContext(); } catch (e) {} t0 = performance.now() - cur * 1000; last = cur; requestAnimationFrame(frame); }
+};
+$('scrub').oninput = e => { cur = +e.target.value; t0 = performance.now() - cur * 1000; last = cur; render(cur); $('time').textContent = cur.toFixed(1) + 's'; };
+const setV = v => { V = v; $('bV1').classList.toggle('on', v === 1); $('bV2').classList.toggle('on', v === 2); render(cur); };
+$('bV1').onclick = () => setV(1); $('bV2').onclick = () => setV(2);
+$('bSnd').onclick = () => { snd = !snd; $('bSnd').classList.toggle('on', snd); };
+setV(V);
+render(0);
+</script>
+</body>
+</html>
