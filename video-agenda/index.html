@@ -163,7 +163,7 @@ body.capture #viewport{border-radius:0;box-shadow:none}
         <div class="abs c pill" id="dP2" style="left:150px;top:1220px;padding:14px 34px;background:rgba(59,139,255,.18);border:3px solid var(--blue);font-size:40px"></div>
       </div>
 
-      <!-- E: Boa Vista -->
+      <!-- E: Porto Velho -->
       <div class="scene" id="sE" style="background:linear-gradient(180deg,#0B1E3F,#123b7a)">
         <svg class="abs" width="1080" height="760" style="left:0;top:160px" viewBox="0 0 1080 760">
           <g stroke="rgba(160,200,255,.18)" stroke-width="10" fill="none" stroke-linecap="round">
@@ -179,7 +179,7 @@ body.capture #viewport{border-radius:0;box-shadow:none}
           <path d="M75 186 C40 130 10 100 10 66 A65 65 0 0 1 140 66 C140 100 110 130 75 186Z" fill="#FF4D5E"/>
           <circle cx="75" cy="66" r="26" fill="#fff"/>
         </svg>
-        <div class="abs c pill" id="eLabel" style="left:310px;top:560px;padding:16px 38px;background:#fff;color:#0B1E3F;font-size:46px">Boa Vista · RR</div>
+        <div class="abs c" id="eLabel" style="left:0;width:1080px;top:560px;display:flex;justify-content:center"><div class="pill" style="padding:16px 38px;background:#fff;color:#0B1E3F;font-size:46px">Porto Velho · RO</div></div>
         <div class="abs c" id="eCarlos" style="left:10px;top:700px;width:440px;height:572px"></div>
         <div class="abs c digital" id="eJa" style="left:470px;top:780px;font-size:84px;letter-spacing:-2px">Já existe.</div>
         <div class="abs c" id="eTag" style="left:500px;top:900px;width:520px;height:300px;transform-origin:60px 40px">
@@ -390,11 +390,11 @@ const SEGS = [
   [2.0, 8.0, 'Enquanto isso, ele perguntou pra mais três empresas. Quem respondeu primeiro levou a venda.'],
   [8.0, 15.0, 'Agora olha a mesma mensagem com um funcionário artificial: 4 segundos. Ele responde, tira a dúvida, manda o preço e já marca o horário.'],
   [15.0, 22.0, 'Ele não esquece, não tira folga e não deixa ninguém no vácuo às 23h de domingo.'],
-  [22.0, 28.0, 'Isso já existe, aqui em Boa Vista, e custa menos do que você imagina.'],
+  [22.0, 28.0, 'Isso já existe, aqui em Porto Velho, e custa menos do que você imagina.'],
   [28.0, 29.45, 'Comenta AGENDA que eu te mostro como funciona.'],
 ];
 const KEY = new Set(['9h', '13h', 'três', 'primeiro', 'venda', 'funcionário', 'artificial', '4', 'segundos', 'preço', 'horário',
-  'esquece', 'folga', 'vácuo', '23h', 'domingo', 'boa', 'vista', 'menos', 'agenda']);
+  'esquece', 'folga', 'vácuo', '23h', 'domingo', 'porto', 'velho', 'menos', 'agenda']);
 const WORDS = [], CHUNKS = [];
 SEGS.forEach(([a, b, txt]) => {
   const ws = txt.split(' '), wt = ws.map(w => w.length + 3), tot = wt.reduce((x, y) => x + y, 0);
