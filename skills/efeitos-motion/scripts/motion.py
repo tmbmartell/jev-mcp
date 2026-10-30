@@ -971,6 +971,57 @@ def dm_link(cv, t, ef, ctx):
 
 
 
+
+# ---------------------------------------------------------------- transições
+
+@efeito("reenquadrar", "Disfarça jump cuts: a cada corte alterna o enquadramento (aberto ↔ fechado), como se fosse outra câmera.")
+def reenquadrar(cv, t, ef, ctx):
+    W, H = cv.size
+    chave = ("reenq", id(ef))
+    if chave not in ctx.cache:
+        # alterna só quando o trecho dura o bastante; trechos curtos herdam o enquadramento anterior
+        cortes = sorted(ef["cortes"])
+        bordas = [ef["inicio"]] + cortes + [ef["fim"]]
+        estado, fechado = [], False
+        for a, b in zip(bordas, bordas[1:]):
+            if a != ef["inicio"] and b - a >= ef.get("trecho_minimo", 0.6):
+                fechado = not fechado
+            estado.append((a, b, fechado))
+        ctx.cache[chave] = estado
+    fechado = next((f for a, b, f in ctx.cache[chave] if a <= t < b), False)
+    if not fechado:
+        return cv
+    z = ef.get("zoom", 1.08)
+    cx, cy = ef.get("centro", [0.5, 0.32])
+    cx, cy = cx * W, cy * H
+    box = (cx - cx / z, cy - cy / z, cx + (W - cx) / z, cy + (H - cy) / z)
+    ctx.transformar_mascara(lambda m: m.resize((W, H), Image.BILINEAR, box=box))
+    return cv.resize((W, H), Image.BICUBIC, box=box)
+
+
+@efeito("flash", "Troca de capítulo: lampejo de luz quente (cor creme) de ~0,3 s com leve desfoque no pico.")
+def flash(cv, t, ef, ctx):
+    W, H = cv.size
+    dur = ef.get("duracao", 0.3)
+    meio = ef["inicio"] + dur * 0.4
+    if t < meio:
+        a = ease_out((t - ef["inicio"]) / (dur * 0.4))
+    else:
+        a = 1 - ease_in_out((t - meio) / (dur * 0.6))
+    a = clamp(a) * ef.get("intensidade", 0.55)
+    if a <= 0.01:
+        return cv
+    out = cv.filter(ImageFilter.GaussianBlur(6 * a * ctx.u)) if a > 0.15 else cv
+    luz = Image.new("RGBA", (W, H), (*cor(ef.get("cor"), "#FFF6D8"), 255))
+    # vazamento de luz: mais forte no canto superior direito, como sol entrando pela janela
+    gx = np.linspace(0, 1, W)[None, :]
+    gy = np.linspace(1, 0, H)[:, None]
+    grad = Image.fromarray((140 + 115 * (gx + gy) / 2).astype(np.uint8), "L")
+    luz.putalpha(grad.point(lambda v: int(v * a)))
+    out = out.copy()
+    out.alpha_composite(luz)
+    return out
+
 # ---------------------------------------------------------------- molde "café com gancho"
 # Texto amarelo-manteiga sem animação de entrada (corte seco), manuscrito que se escreve
 # da esquerda para a direita e sai primeiro. Ver references/molde-cafe-com-gancho.md.

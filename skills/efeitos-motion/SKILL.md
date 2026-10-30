@@ -34,6 +34,9 @@ Parâmetros de cada efeito, valores padrão e dicas de tempo: **`references/efei
 **Molde "Café com Gancho"** ("edita no molde café"): estilo minimalista só com texto amarelo-manteiga,
 manuscrito que se escreve, legenda serifada pequena e pausas cortadas. Efeitos `titulo_empilhado` + `destaque` +
 `legenda`. Receita completa em **`references/molde-cafe-com-gancho.md`**.
+
+**Transições e sons** ("põe transição", "coloca som ambiente"): `reenquadrar` em todo jump cut, `flash` só nas viradas
+do roteiro, e `scripts/sons.py mix` para ambiente lo-fi + efeitos sincronizados ao plano. Sistema em `references/efeitos.md`.
 Exemplo completo de plano: **`references/plano-exemplo.json`**.
 
 ## Fluxo de trabalho

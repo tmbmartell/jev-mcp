@@ -156,3 +156,36 @@ palavras = [[w.word.strip(), round(w.start, 2)] for s in segs for w in s.words]
 ## `destaque` (molde café)
 `linhas` (sans), `script` (manuscrito que se escreve a `letras_por_s`=20 e sai 0,15 s antes do fim), `sub` (entra 0,25 s após o manuscrito),
 `tamanho` (64), `tamanho_script` (96), `tamanho_sub` (22), `y` (0.62, centro do bloco), `sombra` (false), `cor` (#FCF6BA).
+
+---
+
+## Transições (sistema)
+
+Regra: transição só onde ela comunica algo. Jump cut comum continua corte seco.
+
+| Token | Efeito | Quando | Duração / easing |
+|---|---|---|---|
+| `corte-reenquadrado` (produtivo) | `reenquadrar` | Em TODOS os jump cuts: alterna aberto ↔ fechado (zoom 1.08 no rosto) para o pulo parecer troca de câmera | instantâneo; trechos < 0,6 s herdam o enquadramento anterior |
+| `capitulo` (expressivo) | `flash` | Só nas viradas do roteiro (gancho→contexto, contexto→conselho, conselho→fechamento). Máx. 3–4 por minuto | 0,3 s: sobe em 40% com ease-out, desce em 60% com ease-in-out; pico centrado no corte |
+
+`reenquadrar`: `cortes` (lista de segundos), `zoom` (1.08), `centro` ([0.5, 0.32]), `trecho_minimo` (0.6). Vai PRIMEIRO no plano.
+`flash`: `duracao` (0.3), `intensidade` (0.55), `cor` (#FFF6D8). Vai depois do `reenquadrar` e antes dos textos.
+Acessibilidade: o flash é de baixo contraste (creme a 55%) e nunca passa de 1 por segundo (seguro para fotossensibilidade).
+
+## Sons (`scripts/sons.py`)
+
+Tudo sintetizado (sem direitos autorais de terceiros). Cada tipo de evento tem SEMPRE o mesmo som:
+
+| Evento no plano | Som | Nível (padrão) |
+|---|---|---|
+| `flash` | `sopro`: whoosh grave→agudo, esquerda→direita, pico no pico do flash | ~20 dB abaixo da voz |
+| palavra do `titulo_empilhado`, `destaque` só sans | `toque`: batida de madeira curta | ~20 dB abaixo |
+| `destaque` com manuscrito | `caneta`: rabisco no papel durante a escrita | ~22 dB abaixo |
+| fundo | `cafe`: pad de piano elétrico lo-fi (Fmaj7–Em7–Dm7–Cmaj7, 4 s cada) + vinil + ar de sala; abaixa ~8 dB quando há voz | ~24 dB abaixo |
+
+```bash
+python scripts/sons.py mix video.mp4 plano.json final.mp4 --volume-ambiente -30 --volume-efeitos -20
+python scripts/sons.py mix video.mp4 plano.json final.mp4 --ambiente nenhum   # só efeitos
+python scripts/sons.py amostras pasta/                                         # ouvir cada som
+```
+Mais alto/baixo: mude `--volume-ambiente` / `--volume-efeitos` em passos de 3 dB.
