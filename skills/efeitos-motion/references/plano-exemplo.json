@@ -1,0 +1,151 @@
+{
+ "entrada": "meu-video.mp4",
+ "saida": "meu-video-editado.mp4",
+ "efeitos": [
+  {
+   "tipo": "parede_videos",
+   "inicio": 0,
+   "fim": 2.4
+  },
+  {
+   "tipo": "zoom_palavra",
+   "inicio": 6.0,
+   "fim": 7.2,
+   "zoom": 1.3
+  },
+  {
+   "tipo": "fundo_trocado",
+   "inicio": 9,
+   "fim": 12,
+   "fundo": "#2B2118"
+  },
+  {
+   "tipo": "recorte_papel",
+   "inicio": 12,
+   "fim": 15.5,
+   "letras": "50%",
+   "etiqueta": "acabou de lançar",
+   "etiqueta_em": 13.5
+  },
+  {
+   "tipo": "afasta_e_revela",
+   "inicio": 15.5,
+   "fim": 18.5
+  },
+  {
+   "tipo": "orbita",
+   "inicio": 18.5,
+   "fim": 22
+  },
+  {
+   "tipo": "capa_revista",
+   "inicio": 22,
+   "fim": 24.5,
+   "palavra": "CLAREZA"
+  },
+  {
+   "tipo": "mural_comentarios",
+   "inicio": 24.5,
+   "fim": 27.5,
+   "comentarios": [
+    {
+     "usuario": "ana.lima",
+     "texto": "Como você fez esse efeito??"
+    },
+    {
+     "usuario": "joaopedro",
+     "texto": "Isso é muito bom, quero aprender"
+    },
+    {
+     "usuario": "carol.mkt",
+     "texto": "Edita o meu também 😂"
+    },
+    {
+     "usuario": "rafa_design",
+     "texto": "Salvei pra testar amanhã"
+    }
+   ]
+  },
+  {
+   "tipo": "celular_flutuando",
+   "inicio": 27.5,
+   "fim": 30.5
+  },
+  {
+   "tipo": "checklist",
+   "inicio": 30.5,
+   "fim": 34,
+   "itens": [
+    "Grava o vídeo",
+    "Manda pro Claude",
+    "Posta"
+   ]
+  },
+  {
+   "tipo": "tela_claude",
+   "inicio": 34,
+   "fim": 39
+  },
+  {
+   "tipo": "contador",
+   "inicio": 39,
+   "fim": 41.5
+  },
+  {
+   "tipo": "logo_pop",
+   "inicio": 41.5,
+   "fim": 43
+  },
+  {
+   "tipo": "dm_link",
+   "inicio": 43,
+   "fim": 46
+  },
+  {
+   "tipo": "titulo_lista",
+   "inicio": 2.4,
+   "fim": 9,
+   "itens": [
+    "parede de vídeos",
+    "celular flutuando",
+    "zoom na palavra",
+    "checklist",
+    "órbita",
+    "capa de revista",
+    "fundo trocado",
+    "tela do Claude",
+    "mural de comentário",
+    "afasta e revela",
+    "recorte de papel"
+   ],
+   "ativo": [
+    [
+     0,
+     2.4
+    ],
+    [
+     1,
+     4
+    ],
+    [
+     2,
+     6
+    ],
+    [
+     6,
+     8
+    ]
+   ]
+  },
+  {
+   "tipo": "legenda",
+   "inicio": 2.4,
+   "fim": 49,
+   "texto": "Isso aqui é um teste de legenda palavra por palavra para ver como fica no vídeo inteiro com os efeitos todos funcionando juntos até o final",
+   "destaques": [
+    "teste",
+    "efeitos"
+   ]
+  }
+ ]
+}
