@@ -1,0 +1,578 @@
+<meta charset="utf-8">
+<title>Gabinete de Skills</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: um gabinete de curiosidades. Cada skill é uma peça do acervo com nº de catálogo; filtros por sala (categoria) no topo, fichas em grade, ficha completa em gaveta lateral. */
+:root{
+  --bg:#eceef1; --surface:#fbfbfc; --surface-2:#e2e5ea; --ink:#171b26; --muted:#5b6274; --line:#cdd2db;
+  --accent:#2d43c9; --accent-ink:#ffffff; --star:#c98a06; --danger:#b42335;
+  --c-seguranca:#c0392b; --c-marketing:#d9467a; --c-financeiro:#14855c; --c-memoria:#7b4fd6;
+  --c-design:#d97706; --c-dev:#2563eb; --c-ideias:#0e8a96; --c-bots:#4b5563; --c-outra:#8a6d3b;
+  --f-display:"Gloock", "Georgia", "Times New Roman", serif;
+  --f-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12141b; --surface:#1b1e28; --surface-2:#262a37; --ink:#e9ebf2; --muted:#9aa1b4; --line:#323747;
+  --accent:#8b9bff; --accent-ink:#0d1020; --star:#f2b632; --danger:#ff7a8a;
+  --c-seguranca:#ff7b6b; --c-marketing:#ff7fae; --c-financeiro:#45d39a; --c-memoria:#b39bff;
+  --c-design:#ffb347; --c-dev:#7aa7ff; --c-ideias:#4fd2df; --c-bots:#aab2c3; --c-outra:#d6b77c;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12141b; --surface:#1b1e28; --surface-2:#262a37; --ink:#e9ebf2; --muted:#9aa1b4; --line:#323747;
+  --accent:#8b9bff; --accent-ink:#0d1020; --star:#f2b632; --danger:#ff7a8a;
+  --c-seguranca:#ff7b6b; --c-marketing:#ff7fae; --c-financeiro:#45d39a; --c-memoria:#b39bff;
+  --c-design:#ffb347; --c-dev:#7aa7ff; --c-ideias:#4fd2df; --c-bots:#aab2c3; --c-outra:#d6b77c;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* Cabeçalho */
+header.top{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.brand h1{font-family:var(--f-display);font-weight:400;font-size:clamp(2rem,5vw,3rem);line-height:1;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.brand p{margin:8px 0 0;color:var(--muted);max-width:56ch}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:999px;cursor:pointer;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--danger);background:transparent}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* Resumo */
+.summary{display:flex;flex-wrap:wrap;gap:8px 28px;padding:16px 0;color:var(--muted);font-size:14px}
+.summary b{color:var(--ink);font-family:var(--f-mono);font-weight:500;font-size:15px;margin-right:4px}
+
+/* Barra de filtros */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.search{flex:1 1 260px;min-width:0;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:0 14px}
+.search input{border:0;background:transparent;padding:10px 0;width:100%;outline:none}
+.search:focus-within{border-color:var(--accent)}
+select{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:9px 12px;cursor:pointer}
+.rooms{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px}
+.room{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;cursor:pointer;font-size:14px;font-weight:500}
+.room .n{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.room[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.room[aria-pressed="true"] .n{color:inherit;opacity:.7}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--cat,var(--c-outra));flex:none}
+
+/* Grade de fichas */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.card{position:relative;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 14px;cursor:pointer;display:flex;flex-direction:column;gap:10px;min-width:0;transition:transform .15s ease,border-color .15s ease}
+.card:hover{border-color:var(--cat,var(--ink));transform:translateY(-2px)}
+.card-head{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:12px;color:var(--muted)}
+.cat-label{display:inline-flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;color:var(--cat,var(--muted))}
+.card h3{font-family:var(--f-display);font-weight:400;font-size:1.35rem;line-height:1.15;margin:0;overflow-wrap:anywhere}
+.type{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border-radius:4px;padding:1px 6px;text-transform:uppercase;letter-spacing:.05em}
+.field-k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:2px}
+.field-v{margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card-foot{margin-top:auto;padding-top:10px;border-top:1px dashed var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.stars{color:var(--star);letter-spacing:1px;white-space:nowrap}
+.stars .off{color:var(--line)}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:12px;background:var(--surface-2);border-radius:4px;padding:1px 7px;color:var(--muted)}
+
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:40px 20px;text-align:center;color:var(--muted)}
+.empty h3{font-family:var(--f-display);font-weight:400;color:var(--ink);font-size:1.4rem;margin:0 0 6px}
+.status{font-size:13px;color:var(--muted);margin:-12px 0 16px}
+
+/* Gaveta / diálogos */
+dialog{border:0;padding:0;background:var(--surface);color:var(--ink);max-width:100%;max-height:100%}
+dialog::backdrop{background:rgba(10,12,20,.45)}
+dialog.drawer{margin:0 0 0 auto;height:100%;width:min(620px,100%);border-left:1px solid var(--line)}
+dialog.modal{width:min(640px,calc(100% - 24px));border-radius:14px;border:1px solid var(--line)}
+.d-in{padding:22px max(20px,env(safe-area-inset-right,0px)) 32px 22px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;height:100%}
+.d-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.d-top h2{font-family:var(--f-display);font-weight:400;font-size:2rem;line-height:1.05;margin:4px 0 0;overflow-wrap:anywhere;text-wrap:balance}
+.close{border:0;background:var(--surface-2);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;flex:none}
+.ficha{display:grid;gap:14px}
+.ficha p{margin:0;white-space:pre-wrap}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--muted);align-items:center}
+.meta a{color:var(--accent);overflow-wrap:anywhere}
+.big-score{display:flex;align-items:baseline;gap:10px;padding:14px 16px;background:var(--surface-2);border-radius:var(--r)}
+.big-score .v{font-family:var(--f-display);font-size:2.2rem;line-height:1}
+.big-score .stars{font-size:18px}
+h4{font-family:var(--f-display);font-weight:400;font-size:1.3rem;margin:0}
+.note{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:6px}
+.note-top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.note p{margin:0;white-space:pre-wrap}
+.note .where{font-weight:600;color:var(--ink)}
+.x{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;text-decoration:underline}
+
+form.stack{display:grid;gap:12px}
+label.f{display:grid;gap:5px;font-size:13px;font-weight:600;color:var(--muted)}
+label.f input,label.f textarea,label.f select{font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%}
+label.f textarea{resize:vertical;min-height:70px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.row2{grid-template-columns:1fr}}
+.rate{display:flex;gap:2px}
+.rate button{border:0;background:transparent;font-size:26px;line-height:1;cursor:pointer;color:var(--line);padding:2px}
+.rate button.on{color:var(--star)}
+.rate-hint{font-size:13px;color:var(--muted);align-self:center;margin-left:8px}
+.paste{background:var(--surface-2);border-radius:var(--r);padding:14px;display:grid;gap:8px}
+.paste p{margin:0;font-size:13px;color:var(--muted)}
+.form-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.hint{font-size:13px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:50}
+textarea.io{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px}
+@media (prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Gabinete de Skills</h1>
+      <p>O acervo das suas skills e bots: o que cada peça faz, como funciona, onde você usou e quanto ela valeu.</p>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="btnIO" type="button">Backup</button>
+      <button class="btn primary" id="btnNew" type="button">+ Catalogar skill</button>
+    </div>
+  </header>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="toolbar">
+    <label class="search" for="q">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Buscar por nome, função, tag…" autocomplete="off">
+    </label>
+    <select id="fType" aria-label="Tipo">
+      <option value="">Todos os tipos</option>
+      <option value="skill">Skills</option>
+      <option value="bot">Bots</option>
+      <option value="mcp">MCP</option>
+    </select>
+    <select id="sort" aria-label="Ordenar">
+      <option value="num">Ordem de catálogo</option>
+      <option value="score">Melhor nota</option>
+      <option value="uses">Mais usadas</option>
+      <option value="az">A → Z</option>
+      <option value="unused">Nunca usadas primeiro</option>
+    </select>
+  </div>
+  <div class="rooms" id="rooms" role="group" aria-label="Categorias"></div>
+  <p class="status" id="status" hidden></p>
+  <div class="grid" id="grid"></div>
+</div>
+
+<!-- Ficha completa -->
+<dialog class="drawer" id="dDetail"><div class="d-in" id="detail"></div></dialog>
+
+<!-- Catalogar / editar -->
+<dialog class="modal" id="dForm">
+  <div class="d-in">
+    <div class="d-top"><h2 id="formTitle">Catalogar skill</h2><button class="close" type="button" data-close aria-label="Fechar">×</button></div>
+    <div class="paste">
+      <label class="f" for="pasteBox">Cole aqui o SKILL.md, o README do bot ou a descrição
+        <textarea id="pasteBox" rows="4" placeholder="---&#10;name: minha-skill&#10;description: O que ela faz…&#10;---"></textarea>
+      </label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn" type="button" id="btnParse">Ler dados</button>
+        <button class="btn" type="button" id="btnAI" hidden>Claude preenche a ficha</button>
+        <span class="hint" id="pasteHint">Lê o nome e a descrição do cabeçalho do arquivo.</span>
+      </div>
+    </div>
+    <form class="stack" id="skillForm">
+      <div class="row2">
+        <label class="f" for="fNome">Nome<input id="fNome" required maxlength="80"></label>
+        <label class="f" for="fTipo">Tipo
+          <select id="fTipo"><option value="skill">Skill</option><option value="bot">Bot</option><option value="mcp">MCP / Servidor</option></select>
+        </label>
+      </div>
+      <label class="f" for="fCat">Categoria
+        <input id="fCat" list="catList" required placeholder="Segurança, Marketing, Financeiro…">
+        <datalist id="catList"></datalist>
+      </label>
+      <label class="f" for="fFaz">O que faz<textarea id="fFaz" rows="2" required></textarea></label>
+      <label class="f" for="fComo">Como faz<textarea id="fComo" rows="3" placeholder="O passo a passo, o método, as entradas e saídas"></textarea></label>
+      <label class="f" for="fQuando">Quando usar<textarea id="fQuando" rows="2" placeholder="Frases ou situações que disparam a skill"></textarea></label>
+      <div class="row2">
+        <label class="f" for="fFonte">Link ou origem<input id="fFonte" placeholder="github.com/… ou nome do plugin"></label>
+        <label class="f" for="fTags">Tags<input id="fTags" placeholder="separadas por vírgula"></label>
+      </div>
+      <div class="form-actions">
+        <button class="btn danger" type="button" id="btnDel" hidden>Remover do acervo</button>
+        <button class="btn ghost" type="button" data-close>Cancelar</button>
+        <button class="btn primary" type="submit">Salvar ficha</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<!-- Backup -->
+<dialog class="modal" id="dIO">
+  <div class="d-in">
+    <div class="d-top"><h2>Backup do acervo</h2><button class="close" type="button" data-close aria-label="Fechar">×</button></div>
+    <p class="hint" style="margin:0">Copie o JSON para guardar no repositório (arquivo <span class="mono">skills.json</span>) ou cole um JSON para importar fichas.</p>
+    <textarea class="io" id="ioBox" spellcheck="false"></textarea>
+    <div class="form-actions">
+      <button class="btn" type="button" id="btnCopy">Copiar JSON</button>
+      <button class="btn primary" type="button" id="btnImport">Importar o que colei</button>
+    </div>
+    <p class="hint" id="ioHint" style="margin:0"></p>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  const CATS = [
+    ["Segurança","--c-seguranca"],["Marketing","--c-marketing"],["Financeiro","--c-financeiro"],
+    ["Memória","--c-memoria"],["Design","--c-design"],["Dev","--c-dev"],["Ideias","--c-ideias"],["Bots & IA","--c-bots"]
+  ];
+  const TYPE_LABEL = {skill:"Skill", bot:"Bot", mcp:"MCP"};
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const norm = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+  const catVar = name => { const hit = CATS.find(([c]) => norm(c) === norm(name)); return hit ? `var(${hit[1]})` : "var(--c-outra)"; };
+  const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+  const today = () => new Date().toISOString().slice(0,10);
+  const fmtDate = d => { try { const [y,m,dd] = d.split("-"); return `${dd}/${m}/${y}`; } catch { return d; } };
+
+  const state = { skills: [], room: "", q: "", type: "", sort: "num", canWrite: true, openId: null, editId: null, rating: 0 };
+
+  /* ---------- Armazenamento: db do artifact, senão navegador ---------- */
+  const LS = "gabinete.skills.v1";
+  const store = {
+    mode: "loading", db: null,
+    async init(onData) {
+      let db = null;
+      if (window.claude && typeof window.claude.use === "function") {
+        try { db = await window.claude.use("db"); } catch { db = null; }
+      }
+      if (db) {
+        this.mode = "db"; this.db = db;
+        try {
+          const user = await window.claude.use("user");
+          if (user) { const w = await user.can("data.write"); if (w === false && !(await user.isOwner())) state.canWrite = false; }
+        } catch {}
+        const timer = setTimeout(() => setStatus("O acervo ainda não respondeu. Confira a conexão; os dados aparecem assim que ele responder."), 10000);
+        db.collection("skills").onSnapshot(snap => {
+          if (!snap.metadata.fromCache) { clearTimeout(timer); setStatus(""); }
+          onData(snap.docs.map(d => ({ ...d.data(), id: d.id })));
+        }, err => { clearTimeout(timer); setStatus("Não foi possível ler o acervo agora (" + err.code + ")."); });
+        return;
+      }
+      this.mode = "local";
+      let list = null;
+      try { list = JSON.parse(localStorage.getItem(LS) || "null"); } catch {}
+      if (!Array.isArray(list)) {
+        try { const r = await fetch("skills.json"); if (r.ok) list = await r.json(); } catch {}
+        if (!Array.isArray(list)) list = [];
+        this.persistLocal(list);
+      }
+      this.local = list; onData(list.slice());
+      this.onData = onData;
+    },
+    persistLocal(list) { try { localStorage.setItem(LS, JSON.stringify(list)); } catch {} },
+    async save(skill) {
+      const clean = JSON.parse(JSON.stringify(skill));
+      if (this.mode === "db") { const { id, ...body } = clean; await this.db.collection("skills").doc(id).set(body); return; }
+      const i = this.local.findIndex(s => s.id === clean.id);
+      if (i >= 0) this.local[i] = clean; else this.local.push(clean);
+      this.persistLocal(this.local); this.onData(this.local.slice());
+    },
+    async remove(id) {
+      if (this.mode === "db") { await this.db.collection("skills").doc(id).delete(); return; }
+      this.local = this.local.filter(s => s.id !== id);
+      this.persistLocal(this.local); this.onData(this.local.slice());
+    }
+  };
+
+  /* ---------- Cálculos ---------- */
+  const notes = s => Array.isArray(s.notas) ? s.notas : [];
+  const avg = s => { const n = notes(s).filter(x => x.nota > 0); return n.length ? n.reduce((a,x) => a + x.nota, 0) / n.length : 0; };
+  const starsHTML = (v, size) => { let h = ""; for (let i = 1; i <= 5; i++) h += i <= Math.round(v) ? "★" : '<span class="off">★</span>'; return `<span class="stars" aria-label="${v ? v.toFixed(1) : 0} de 5"${size ? ` style="font-size:${size}"` : ""}>${h}</span>`; };
+  const nextNum = () => state.skills.reduce((m, s) => Math.max(m, s.num || 0), 0) + 1;
+  const allCats = () => {
+    const seen = new Map(CATS.map(([c]) => [norm(c), c]));
+    state.skills.forEach(s => { if (s.categoria && !seen.has(norm(s.categoria))) seen.set(norm(s.categoria), s.categoria); });
+    return [...seen.values()];
+  };
+
+  /* ---------- Render ---------- */
+  function setStatus(t) { const el = $("#status"); el.textContent = t; el.hidden = !t; }
+  function toast(t) { const el = $("#toast"); (document.querySelector("dialog[open]") || document.body).appendChild(el); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => el.hidden = true, 2600); }
+
+  function filtered() {
+    const q = norm(state.q);
+    let list = state.skills.filter(s =>
+      (!state.room || norm(s.categoria) === norm(state.room)) &&
+      (!state.type || s.tipo === state.type) &&
+      (!q || norm([s.nome, s.oQueFaz, s.comoFaz, s.quandoUsar, (s.tags||[]).join(" "), notes(s).map(n => n.onde + " " + n.texto).join(" ")].join(" ")).includes(q)));
+    const by = {
+      num: (a,b) => (a.num||0) - (b.num||0),
+      score: (a,b) => avg(b) - avg(a) || notes(b).length - notes(a).length,
+      uses: (a,b) => notes(b).length - notes(a).length,
+      az: (a,b) => a.nome.localeCompare(b.nome, "pt"),
+      unused: (a,b) => notes(a).length - notes(b).length || (a.num||0) - (b.num||0)
+    }[state.sort];
+    return list.sort(by);
+  }
+
+  function renderSummary() {
+    const total = state.skills.length;
+    const allNotes = state.skills.flatMap(notes);
+    const rated = allNotes.filter(n => n.nota > 0);
+    const mean = rated.length ? (rated.reduce((a,n) => a + n.nota, 0) / rated.length).toFixed(1) : "–";
+    const never = state.skills.filter(s => !notes(s).length).length;
+    const best = state.skills.filter(s => notes(s).length).sort((a,b) => avg(b) - avg(a))[0];
+    $("#summary").innerHTML =
+      `<span><b>${total}</b>peças no acervo</span><span><b>${allNotes.length}</b>usos registrados</span>` +
+      `<span><b>${mean}</b>nota média</span><span><b>${never}</b>ainda sem uso</span>` +
+      (best ? `<span>Favorita: <b style="font-family:var(--f-body);font-weight:600">${esc(best.nome)}</b></span>` : "");
+  }
+
+  function renderRooms() {
+    const count = c => state.skills.filter(s => norm(s.categoria) === norm(c)).length;
+    const chips = [`<button class="room" type="button" data-room="" aria-pressed="${!state.room}">Todas <span class="n">${state.skills.length}</span></button>`]
+      .concat(allCats().map(c => `<button class="room" type="button" data-room="${esc(c)}" aria-pressed="${norm(state.room) === norm(c)}" style="--cat:${catVar(c)}"><span class="dot"></span>${esc(c)} <span class="n">${count(c)}</span></button>`));
+    $("#rooms").innerHTML = chips.join("");
+    $("#catList").innerHTML = allCats().map(c => `<option value="${esc(c)}">`).join("");
+  }
+
+  function cardHTML(s) {
+    const n = notes(s), a = avg(s);
+    return `<button class="card" type="button" data-open="${esc(s.id)}" style="--cat:${catVar(s.categoria)}">
+      <div class="card-head"><span class="cat-label"><span class="dot"></span>${esc(s.categoria)}</span><span class="mono">Nº ${String(s.num||0).padStart(3,"0")}</span></div>
+      <h3>${esc(s.nome)}</h3>
+      <div><div class="field-k">O que faz</div><p class="field-v">${esc(s.oQueFaz)}</p></div>
+      ${s.comoFaz ? `<div><div class="field-k">Como faz</div><p class="field-v">${esc(s.comoFaz)}</p></div>` : ""}
+      ${(s.tags||[]).length ? `<div class="tags">${s.tags.slice(0,5).map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
+      <div class="card-foot">
+        <span>${n.length ? `${starsHTML(a)} <span class="mono">${a ? a.toFixed(1) : "–"}</span> · ${n.length} ${n.length === 1 ? "uso" : "usos"}` : "Ainda sem uso registrado"}</span>
+        <span class="type">${TYPE_LABEL[s.tipo] || "Skill"}</span>
+      </div>
+    </button>`;
+  }
+
+  function renderGrid() {
+    const list = filtered(), g = $("#grid");
+    if (store.mode === "loading") { g.innerHTML = `<div class="empty" style="grid-column:1/-1"><h3>Abrindo o gabinete…</h3>Suas fichas aparecem aqui em instantes.</div>`; return; }
+    if (!state.skills.length) { g.innerHTML = `<div class="empty" style="grid-column:1/-1"><h3>O acervo está vazio</h3>Toque em <b>+ Catalogar skill</b> e cole o SKILL.md ou a descrição de um bot para criar a primeira ficha.</div>`; return; }
+    if (!list.length) { g.innerHTML = `<div class="empty" style="grid-column:1/-1"><h3>Nada nesta sala ainda</h3>${state.room ? `Nenhuma peça em <b>${esc(state.room)}</b>${state.q ? " com essa busca" : ""}.` : "Nenhuma ficha bate com essa busca."} ${state.canWrite ? "Que tal catalogar uma?" : ""}</div>`; return; }
+    g.innerHTML = list.map(cardHTML).join("");
+  }
+
+  function renderDetail() {
+    const s = state.skills.find(x => x.id === state.openId);
+    if (!s) { if ($("#dDetail").open) $("#dDetail").close(); return; }
+    const n = notes(s).slice().sort((a,b) => (b.data||"").localeCompare(a.data||"")), a = avg(s);
+    const link = s.fonte ? (/^https?:\/\//.test(s.fonte) || /^[\w.-]+\.\w{2,}\//.test(s.fonte) ? `<a href="${esc(/^https?:/.test(s.fonte) ? s.fonte : "https://" + s.fonte)}" target="_blank" rel="noopener">${esc(s.fonte)}</a>` : esc(s.fonte)) : "";
+    $("#detail").style.setProperty("--cat", catVar(s.categoria));
+    $("#detail").innerHTML = `
+      <div class="d-top">
+        <div><span class="cat-label"><span class="dot"></span>${esc(s.categoria)}</span> <span class="mono" style="color:var(--muted);font-size:12px;margin-left:8px">Nº ${String(s.num||0).padStart(3,"0")}</span>
+        <h2>${esc(s.nome)}</h2></div>
+        <button class="close" type="button" data-close aria-label="Fechar">×</button>
+      </div>
+      <div class="meta"><span class="type">${TYPE_LABEL[s.tipo] || "Skill"}</span>${link ? `<span>Origem: ${link}</span>` : ""}${s.criadoEm ? `<span>Catalogada em ${fmtDate(s.criadoEm)}</span>` : ""}
+        ${state.canWrite ? `<button class="x" type="button" data-edit="${esc(s.id)}">Editar ficha</button>` : ""}</div>
+      <div class="ficha">
+        <div><div class="field-k">O que faz</div><p>${esc(s.oQueFaz)}</p></div>
+        ${s.comoFaz ? `<div><div class="field-k">Como faz</div><p>${esc(s.comoFaz)}</p></div>` : ""}
+        ${s.quandoUsar ? `<div><div class="field-k">Quando usar</div><p>${esc(s.quandoUsar)}</p></div>` : ""}
+        ${(s.tags||[]).length ? `<div class="tags">${s.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
+      </div>
+      <div class="big-score">${n.length ? `<span class="v">${a ? a.toFixed(1) : "–"}</span>${starsHTML(a, "18px")}<span class="hint">${n.length} ${n.length === 1 ? "uso registrado" : "usos registrados"}</span>` : `<span class="hint">Nenhum uso registrado. Depois de usar, conte aqui embaixo como foi.</span>`}</div>
+      ${state.canWrite ? `
+      <form class="stack" id="noteForm">
+        <h4>Registrar uso</h4>
+        <div style="display:flex;align-items:center;flex-wrap:wrap">
+          <div class="rate" id="rate" role="radiogroup" aria-label="Nota de 1 a 5">${[1,2,3,4,5].map(i => `<button type="button" role="radio" aria-checked="${state.rating === i}" data-rate="${i}" class="${i <= state.rating ? "on" : ""}" aria-label="${i} estrela${i>1?"s":""}">★</button>`).join("")}</div>
+          <span class="rate-hint" id="rateHint">${["Toque nas estrelas para dar nota","Não serviu","Fraca","Ok","Boa","Indispensável"][state.rating]}</span>
+        </div>
+        <div class="row2">
+          <label class="f" for="nOnde">Onde usei<input id="nOnde" placeholder="Projeto, cliente, situação"></label>
+          <label class="f" for="nData">Quando<input id="nData" type="date" value="${today()}"></label>
+        </div>
+        <label class="f" for="nTexto">O que achei<textarea id="nTexto" rows="3" placeholder="Funcionou? O que surpreendeu? O que faltou?"></textarea></label>
+        <div class="form-actions"><button class="btn primary" type="submit">Guardar observação</button></div>
+      </form>` : ""}
+      <div style="display:grid;gap:10px">
+        <h4>Diário de uso</h4>
+        ${n.length ? n.map(x => `<div class="note">
+            <div class="note-top"><span>${x.nota ? starsHTML(x.nota) : ""} ${x.onde ? `<span class="where">${esc(x.onde)}</span>` : ""}</span>
+            <span class="mono">${x.data ? fmtDate(x.data) : ""}${state.canWrite ? ` <button class="x" type="button" data-delnote="${esc(x.id)}">apagar</button>` : ""}</span></div>
+            ${x.texto ? `<p>${esc(x.texto)}</p>` : ""}
+          </div>`).join("") : `<p class="hint" style="margin:0">As observações que você guardar aparecem aqui, da mais recente para a mais antiga.</p>`}
+      </div>`;
+  }
+
+  function render() {
+    renderSummary(); renderRooms(); renderGrid();
+    if (state.openId) renderDetail();
+    $("#btnNew").hidden = !state.canWrite;
+  }
+
+  /* ---------- Formulário de ficha ---------- */
+  function openForm(id) {
+    state.editId = id || null;
+    const s = id ? state.skills.find(x => x.id === id) : null;
+    $("#formTitle").textContent = s ? "Editar ficha" : "Catalogar skill";
+    $("#fNome").value = s?.nome || ""; $("#fTipo").value = s?.tipo || "skill";
+    $("#fCat").value = s?.categoria || (state.room || ""); $("#fFaz").value = s?.oQueFaz || "";
+    $("#fComo").value = s?.comoFaz || ""; $("#fQuando").value = s?.quandoUsar || "";
+    $("#fFonte").value = s?.fonte || ""; $("#fTags").value = (s?.tags || []).join(", ");
+    $("#pasteBox").value = ""; $("#btnDel").hidden = !s; $("#btnDel").dataset.armed = "";
+    $("#btnDel").textContent = "Remover do acervo";
+    $("#pasteHint").textContent = "Lê o nome e a descrição do cabeçalho do arquivo.";
+    $("#dForm").showModal();
+  }
+
+  function parsePasted(txt) {
+    const out = {};
+    const fm = txt.match(/^\s*---\s*\n([\s\S]*?)\n---/);
+    const head = fm ? fm[1] : txt;
+    const get = k => { const m = head.match(new RegExp("^" + k + "\\s*:\\s*(.+)$", "mi")); return m ? m[1].trim().replace(/^["']|["']$/g, "") : ""; };
+    out.nome = get("name") || get("nome") || (txt.match(/^#\s+(.+)$/m) || [])[1] || "";
+    out.oQueFaz = get("description") || get("descri[cç][aã]o") || "";
+    const body = fm ? txt.slice(fm[0].length).trim() : "";
+    if (!out.oQueFaz) { const p = (fm ? body : txt).split(/\n\s*\n/).map(x => x.replace(/^#.*$/gm, "").trim()).find(x => x.length > 20); if (p) out.oQueFaz = p.slice(0, 400); }
+    if (body) out.comoFaz = body.split(/\n\s*\n/).map(x => x.trim()).filter(x => x && !/^#/.test(x)).slice(0, 2).join("\n\n").slice(0, 600);
+    const m = (out.oQueFaz || "").match(/(use (?:esta skill )?(?:sempre )?quando|use when|trigger with|acione)[^.]*\./i);
+    if (m) out.quandoUsar = m[0];
+    return out;
+  }
+  function fillForm(d) {
+    if (d.nome) $("#fNome").value = d.nome;
+    if (d.tipo && TYPE_LABEL[d.tipo]) $("#fTipo").value = d.tipo;
+    if (d.categoria) $("#fCat").value = d.categoria;
+    if (d.oQueFaz) $("#fFaz").value = d.oQueFaz;
+    if (d.comoFaz) $("#fComo").value = d.comoFaz;
+    if (d.quandoUsar) $("#fQuando").value = d.quandoUsar;
+    if (Array.isArray(d.tags) && d.tags.length) $("#fTags").value = d.tags.join(", ");
+  }
+
+  let sample = null;
+  async function askClaude() {
+    const txt = $("#pasteBox").value.trim();
+    if (!txt) { $("#pasteHint").textContent = "Cole o conteúdo da skill primeiro."; return; }
+    const btn = $("#btnAI"); btn.disabled = true; $("#pasteHint").textContent = "Claude está lendo a skill…";
+    try {
+      const r = await sample.json(
+        "Você cataloga skills e bots de IA em português do Brasil. Leia o material abaixo e responda SOMENTE com um objeto JSON neste formato: " +
+        '{"nome":string,"tipo":"skill"|"bot"|"mcp","categoria":string,"oQueFaz":string,"comoFaz":string,"quandoUsar":string,"tags":string[]}. ' +
+        "categoria deve ser uma destas, se alguma servir: " + allCats().join(", ") + ". oQueFaz: 1 a 2 frases diretas. comoFaz: o método em até 4 frases curtas. quandoUsar: situações ou frases que disparam. tags: até 5, minúsculas.\n\nMATERIAL:\n" + txt.slice(0, 12000),
+        { modelTier: "quick" });
+      if (r && typeof r === "object") { fillForm(r); $("#pasteHint").textContent = "Ficha preenchida. Revise antes de salvar."; }
+      else $("#pasteHint").textContent = "Não consegui ler a resposta. Tente o botão Ler dados.";
+    } catch (e) {
+      $("#pasteHint").textContent = e?.code === "not_granted" ? "Sem permissão para chamar o Claude aqui. Use Ler dados." : e?.code === "rate_limited" ? "Muitos pedidos seguidos. Espere um pouco e tente de novo." : "Não deu certo desta vez. Use Ler dados ou tente de novo.";
+      if (e?.code === "not_granted") btn.hidden = true;
+    } finally { btn.disabled = false; }
+  }
+
+  /* ---------- Eventos ---------- */
+  document.addEventListener("click", async e => {
+    const t = e.target.closest("[data-room],[data-open],[data-close],[data-edit],[data-rate],[data-delnote]");
+    if (!t) return;
+    if (t.hasAttribute("data-room")) { state.room = t.dataset.room; render(); }
+    else if (t.dataset.open) { state.openId = t.dataset.open; state.rating = 0; renderDetail(); $("#dDetail").showModal(); }
+    else if (t.hasAttribute("data-close")) { t.closest("dialog").close(); }
+    else if (t.dataset.edit) { openForm(t.dataset.edit); }
+    else if (t.dataset.rate) {
+      state.rating = +t.dataset.rate;
+      document.querySelectorAll("#rate button").forEach(b => { const on = +b.dataset.rate <= state.rating; b.classList.toggle("on", on); b.setAttribute("aria-checked", +b.dataset.rate === state.rating); });
+      $("#rateHint").textContent = ["","Não serviu","Fraca","Ok","Boa","Indispensável"][state.rating];
+    }
+    else if (t.dataset.delnote) {
+      const s = state.skills.find(x => x.id === state.openId); if (!s) return;
+      if (t.dataset.armed !== "1") { t.dataset.armed = "1"; t.textContent = "confirmar"; return; }
+      await safe(() => store.save({ ...s, notas: notes(s).filter(n => n.id !== t.dataset.delnote) }), "Observação apagada");
+    }
+  });
+  document.addEventListener("submit", async e => {
+    if (e.target.id !== "noteForm") return;
+    e.preventDefault();
+    const s = state.skills.find(x => x.id === state.openId); if (!s) return;
+    const onde = $("#nOnde").value.trim(), texto = $("#nTexto").value.trim();
+    if (!state.rating && !onde && !texto) { $("#rateHint").textContent = "Dê uma nota ou escreva onde usou."; return; }
+    const note = { id: uid(), nota: state.rating, onde, texto, data: $("#nData").value || today() };
+    state.rating = 0;
+    await safe(() => store.save({ ...s, notas: [...notes(s), note] }), "Observação guardada");
+  });
+  document.querySelectorAll("dialog").forEach(d => d.addEventListener("click", e => { if (e.target === d) d.close(); }));
+  $("#dDetail").addEventListener("close", () => { state.openId = null; });
+
+  $("#q").addEventListener("input", e => { state.q = e.target.value; renderGrid(); });
+  $("#fType").addEventListener("change", e => { state.type = e.target.value; renderGrid(); });
+  $("#sort").addEventListener("change", e => { state.sort = e.target.value; renderGrid(); try { localStorage.setItem("gabinete.sort", state.sort); } catch {} });
+  $("#btnNew").addEventListener("click", () => openForm(null));
+  $("#btnParse").addEventListener("click", () => {
+    const txt = $("#pasteBox").value.trim();
+    if (!txt) { $("#pasteHint").textContent = "Cole o conteúdo da skill primeiro."; return; }
+    const d = parsePasted(txt); fillForm(d);
+    $("#pasteHint").textContent = d.nome || d.oQueFaz ? "Dados lidos. Confira a categoria e o como faz." : "Não achei nome nem descrição. Preencha à mão.";
+  });
+  $("#btnAI").addEventListener("click", askClaude);
+  $("#skillForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const prev = state.editId ? state.skills.find(x => x.id === state.editId) : null;
+    const skill = {
+      ...(prev || { id: uid(), num: nextNum(), criadoEm: today(), notas: [] }),
+      nome: $("#fNome").value.trim(), tipo: $("#fTipo").value, categoria: $("#fCat").value.trim(),
+      oQueFaz: $("#fFaz").value.trim(), comoFaz: $("#fComo").value.trim(), quandoUsar: $("#fQuando").value.trim(),
+      fonte: $("#fFonte").value.trim(), tags: $("#fTags").value.split(",").map(t => t.trim()).filter(Boolean)
+    };
+    const ok = await safe(() => store.save(skill), prev ? "Ficha atualizada" : "Peça catalogada");
+    if (ok) $("#dForm").close();
+  });
+  $("#btnDel").addEventListener("click", async e => {
+    const b = e.currentTarget;
+    if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "Toque de novo para remover"; return; }
+    const id = state.editId;
+    const ok = await safe(() => store.remove(id), "Removida do acervo");
+    if (ok) { $("#dForm").close(); if ($("#dDetail").open) $("#dDetail").close(); }
+  });
+  $("#btnIO").addEventListener("click", () => {
+    $("#ioBox").value = JSON.stringify(state.skills.slice().sort((a,b) => (a.num||0) - (b.num||0)), null, 2);
+    $("#ioHint").textContent = ""; $("#btnImport").hidden = !state.canWrite; $("#dIO").showModal();
+  });
+  $("#btnCopy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("#ioBox").value); $("#ioHint").textContent = "JSON copiado."; }
+    catch { $("#ioBox").select(); $("#ioHint").textContent = "Texto selecionado. Use Ctrl+C (ou Copiar no celular)."; }
+  });
+  $("#btnImport").addEventListener("click", async () => {
+    let list; try { list = JSON.parse($("#ioBox").value); } catch { $("#ioHint").textContent = "Esse texto não é um JSON válido. Confira vírgulas e aspas."; return; }
+    if (!Array.isArray(list)) list = [list];
+    let n = 0, num = nextNum();
+    for (const raw of list) {
+      if (!raw || !raw.nome) continue;
+      const exists = raw.id && state.skills.find(s => s.id === raw.id);
+      const s = { notas: [], tags: [], tipo: "skill", categoria: "Outra", oQueFaz: "", criadoEm: today(), ...raw, id: raw.id || uid() };
+      if (!exists && !raw.num) s.num = num++;
+      try { await store.save(s); n++; } catch {}
+    }
+    $("#ioHint").textContent = n ? `${n} ficha${n > 1 ? "s" : ""} importada${n > 1 ? "s" : ""}.` : "Nenhuma ficha com nome encontrada no JSON.";
+  });
+
+  async function safe(fn, okMsg) {
+    try { await fn(); toast(okMsg); return true; }
+    catch (err) {
+      if (err?.code === "invalid_argument" && store.mode === "db") { state.canWrite = false; render(); toast("Este acervo é só para leitura."); }
+      else if (err?.code === "quota_exceeded") toast("O acervo encheu. Apague fichas antigas para abrir espaço.");
+      else toast("Não salvou. Tente de novo em instantes.");
+      return false;
+    }
+  }
+
+  try { const s = localStorage.getItem("gabinete.sort"); if (s) { state.sort = s; $("#sort").value = s; } } catch {}
+  render();
+  store.init(list => { state.skills = list; render(); });
+  if (window.claude && typeof window.claude.use === "function") {
+    window.claude.use("sample").then(s => { if (s) { sample = s; $("#btnAI").hidden = false; } }).catch(() => {});
+  }
+})();
+</script>
