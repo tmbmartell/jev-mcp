@@ -1,0 +1,7 @@
+[
+  {"repo": "vercel-labs/skills", "grupo": "Vercel"},
+  {"repo": "vercel-labs/agent-skills", "grupo": "Vercel"},
+  {"repo": "anthropics/skills", "grupo": "Anthropic"},
+  {"repo": "ComposioHQ/awesome-claude-skills", "grupo": "Composio"},
+  {"repo": "anthropics/claude-plugins-official", "grupo": "Plugins oficiais", "tipo": "plugins"}
+]

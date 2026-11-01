@@ -10,6 +10,7 @@
   --accent:#2d43c9; --accent-ink:#ffffff; --star:#c98a06; --danger:#b42335;
   --c-seguranca:#c0392b; --c-marketing:#d9467a; --c-financeiro:#14855c; --c-memoria:#7b4fd6;
   --c-design:#d97706; --c-dev:#2563eb; --c-ideias:#0e8a96; --c-bots:#4b5563; --c-outra:#8a6d3b;
+  --c-auto:#9a3412; --c-prod:#4d7c0f;
   --f-display:"Gloock", "Georgia", "Times New Roman", serif;
   --f-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -19,13 +20,13 @@
   --bg:#12141b; --surface:#1b1e28; --surface-2:#262a37; --ink:#e9ebf2; --muted:#9aa1b4; --line:#323747;
   --accent:#8b9bff; --accent-ink:#0d1020; --star:#f2b632; --danger:#ff7a8a;
   --c-seguranca:#ff7b6b; --c-marketing:#ff7fae; --c-financeiro:#45d39a; --c-memoria:#b39bff;
-  --c-design:#ffb347; --c-dev:#7aa7ff; --c-ideias:#4fd2df; --c-bots:#aab2c3; --c-outra:#d6b77c;
+  --c-design:#ffb347; --c-dev:#7aa7ff; --c-ideias:#4fd2df; --c-bots:#aab2c3; --c-outra:#d6b77c; --c-auto:#ff9466; --c-prod:#a3d65c;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#12141b; --surface:#1b1e28; --surface-2:#262a37; --ink:#e9ebf2; --muted:#9aa1b4; --line:#323747;
   --accent:#8b9bff; --accent-ink:#0d1020; --star:#f2b632; --danger:#ff7a8a;
   --c-seguranca:#ff7b6b; --c-marketing:#ff7fae; --c-financeiro:#45d39a; --c-memoria:#b39bff;
-  --c-design:#ffb347; --c-dev:#7aa7ff; --c-ideias:#4fd2df; --c-bots:#aab2c3; --c-outra:#d6b77c;
+  --c-design:#ffb347; --c-dev:#7aa7ff; --c-ideias:#4fd2df; --c-bots:#aab2c3; --c-outra:#d6b77c; --c-auto:#ff9466; --c-prod:#a3d65c;
   color-scheme:dark}
 
 *{box-sizing:border-box}
@@ -124,6 +125,32 @@ label.f textarea{resize:vertical;min-height:70px}
 .hint{font-size:13px;color:var(--muted)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:50}
 textarea.io{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px}
+/* Descobrir */
+.discover{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;margin:22px 0 30px;display:grid;gap:14px;min-width:0}
+.sec-title{font-family:var(--f-display);font-weight:400;font-size:1.6rem;margin:0;line-height:1.1}
+.disc-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 16px}
+.disc-meta{font-size:13px;color:var(--muted)}
+.ask{display:flex;gap:8px;flex-wrap:wrap}
+.ask input{flex:1 1 280px;min-width:0;font-size:17px;padding:13px 18px;border-radius:999px;border:1px solid var(--line);background:var(--bg)}
+.ask input:focus{border-color:var(--accent);outline:none}
+.examples{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ex{border:1px dashed var(--line);background:transparent;border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;color:var(--muted)}
+.ex:hover{color:var(--ink);border-color:var(--ink)}
+.ex.new{border-style:solid;border-color:var(--accent);color:var(--accent);font-weight:600}
+.answer{font-size:15px;margin:0;max-width:70ch}
+.res{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.rc{border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0;background:var(--bg)}
+.rc h3{font-family:var(--f-display);font-weight:400;font-size:1.2rem;margin:0;overflow-wrap:anywhere}
+.rc .why{margin:0;font-weight:500}
+.rc .desc{margin:0;color:var(--muted);font-size:13px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.cmd{display:flex;align-items:center;gap:6px;background:var(--surface-2);border-radius:6px;padding:6px 6px 6px 10px;min-width:0}
+.cmd code{font-family:var(--f-mono);font-size:12px;overflow-x:auto;white-space:nowrap;flex:1;min-width:0}
+.cmd button{border:0;background:var(--surface);border-radius:4px;padding:3px 8px;font-size:12px;cursor:pointer;flex:none}
+.rc-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:auto;font-size:13px}
+.rc-actions a{color:var(--accent)}
+.badge-in{font-size:12px;color:var(--c-financeiro);font-weight:600}
+.loading-dots::after{content:"…";animation:dots 1.2s steps(3) infinite}
+@keyframes dots{0%{content:"."}33%{content:".."}66%{content:"..."}}
 @media (prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
 </style>
 
@@ -139,6 +166,25 @@ textarea.io{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px
     </div>
   </header>
 
+  <section class="discover" aria-labelledby="discTitle">
+    <div class="disc-head">
+      <h2 class="sec-title" id="discTitle">Descobrir skills</h2>
+      <span class="disc-meta" id="discMeta">Carregando o catálogo…</span>
+    </div>
+    <form class="ask" id="askForm">
+      <input id="askQ" type="search" placeholder="O que você quer resolver? Ex.: automatizar meu Instagram" autocomplete="off" aria-label="Sua pergunta">
+      <select id="askType" aria-label="Procurar em">
+        <option value="">Skills e plugins</option>
+        <option value="skill">Só skills</option>
+        <option value="plugin">Só plugins</option>
+      </select>
+      <button class="btn primary" type="submit" id="askBtn">Encontrar</button>
+    </form>
+    <div class="examples" id="examples"></div>
+    <div id="discOut" aria-live="polite"></div>
+  </section>
+
+  <h2 class="sec-title">Meu acervo</h2>
   <div class="summary" id="summary"></div>
 
   <div class="toolbar">
@@ -151,6 +197,7 @@ textarea.io{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px
       <option value="skill">Skills</option>
       <option value="bot">Bots</option>
       <option value="mcp">MCP</option>
+      <option value="plugin">Plugins</option>
     </select>
     <select id="sort" aria-label="Ordenar">
       <option value="num">Ordem de catálogo</option>
@@ -186,7 +233,7 @@ textarea.io{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px
       <div class="row2">
         <label class="f" for="fNome">Nome<input id="fNome" required maxlength="80"></label>
         <label class="f" for="fTipo">Tipo
-          <select id="fTipo"><option value="skill">Skill</option><option value="bot">Bot</option><option value="mcp">MCP / Servidor</option></select>
+          <select id="fTipo"><option value="skill">Skill</option><option value="bot">Bot</option><option value="mcp">MCP / Servidor</option><option value="plugin">Plugin</option></select>
         </label>
       </div>
       <label class="f" for="fCat">Categoria
@@ -229,9 +276,9 @@ textarea.io{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px
 (() => {
   const CATS = [
     ["Segurança","--c-seguranca"],["Marketing","--c-marketing"],["Financeiro","--c-financeiro"],
-    ["Memória","--c-memoria"],["Design","--c-design"],["Dev","--c-dev"],["Ideias","--c-ideias"],["Bots & IA","--c-bots"]
+    ["Memória","--c-memoria"],["Design","--c-design"],["Dev","--c-dev"],["Ideias","--c-ideias"],["Bots & IA","--c-bots"],["Produtividade","--c-prod"],["Automação","--c-auto"]
   ];
-  const TYPE_LABEL = {skill:"Skill", bot:"Bot", mcp:"MCP"};
+  const TYPE_LABEL = {skill:"Skill", bot:"Bot", mcp:"MCP", plugin:"Plugin"};
   const $ = s => document.querySelector(s);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const norm = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
@@ -240,7 +287,7 @@ textarea.io{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px
   const today = () => new Date().toISOString().slice(0,10);
   const fmtDate = d => { try { const [y,m,dd] = d.split("-"); return `${dd}/${m}/${y}`; } catch { return d; } };
 
-  const state = { skills: [], room: "", q: "", type: "", sort: "num", canWrite: true, openId: null, editId: null, rating: 0 };
+  const state = { catalog: [], catInfo: null, disc: { q: "", items: [], answer: "", loading: false, mode: "" }, skills: [], room: "", q: "", type: "", sort: "num", canWrite: true, openId: null, editId: null, rating: 0 };
 
   /* ---------- Armazenamento: db do artifact, senão navegador ---------- */
   const LS = "gabinete.skills.v1";
@@ -262,6 +309,10 @@ textarea.io{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px
           if (!snap.metadata.fromCache) { clearTimeout(timer); setStatus(""); }
           onData(snap.docs.map(d => ({ ...d.data(), id: d.id })));
         }, err => { clearTimeout(timer); setStatus("Não foi possível ler o acervo agora (" + err.code + ")."); });
+        db.collection("catalogo").onSnapshot(snap => {
+          const info = snap.docs.find(d => d.id === "info");
+          setCatalog(info ? info.data() : null, snap.docs.filter(d => d.id !== "info").flatMap(d => d.data().skills || []));
+        }, () => { $("#discMeta").textContent = "Catálogo indisponível agora."; });
         return;
       }
       this.mode = "local";
@@ -273,6 +324,8 @@ textarea.io{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px
         this.persistLocal(list);
       }
       this.local = list; onData(list.slice());
+      try { const r = await fetch("catalogo.json"); if (r.ok) { const c = await r.json(); setCatalog(c.info, c.skills || []); } else throw 0; }
+      catch { $("#discMeta").textContent = "Rode scripts/atualizar_catalogo.py para gerar o catálogo."; }
       this.onData = onData;
     },
     persistLocal(list) { try { localStorage.setItem(LS, JSON.stringify(list)); } catch {} },
@@ -411,9 +464,109 @@ textarea.io{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px
   }
 
   function render() {
-    renderSummary(); renderRooms(); renderGrid();
+    renderSummary(); renderRooms(); renderGrid(); renderDiscover();
     if (state.openId) renderDetail();
     $("#btnNew").hidden = !state.canWrite;
+  }
+
+  /* ---------- Descobrir ---------- */
+  const EXEMPLOS = ["automatizar posts no Instagram", "organizar minhas finanças e notas fiscais", "criar apresentações bonitas", "revisar segurança do meu código", "guardar memória e anotações", "escrever copy de anúncios"];
+  const PT_EN = { financ: "finance invoice accounting payment", nota: "invoice", fiscal: "invoice tax", planilha: "spreadsheet xlsx excel", apresenta: "presentation pptx slides", slide: "slides pptx", contrat: "contract legal", segur: "security", seguran: "security", codigo: "code review", "código": "code", anuncio: "ads advertising", "anúncio": "ads", conteudo: "content social", "conteúdo": "content", rede: "social media", marca: "brand", memoria: "memory notes knowledge", "memória": "memory notes", anota: "notes", video: "video", "vídeo": "video", imagem: "image", foto: "photo image", site: "website web", teste: "testing test", documento: "document docx", reuni: "meeting", venda: "sales crm leads", cliente: "crm customer", email: "email gmail", agenda: "calendar", automat: "automation", design: "design", tarefa: "task project", projeto: "project management", pesquis: "research", ideia: "brainstorm ideas", curriculo: "resume", "currículo": "resume", traduz: "translate", escrev: "writing", texto: "writing", pdf: "pdf" };
+
+  function setCatalog(info, list) {
+    state.catInfo = info; state.catalog = list;
+    renderDiscover();
+  }
+  function searchCatalog(terms, n) {
+    const ts = [...new Set(terms.map(norm).filter(t => t.length > 1))];
+    if (!ts.length) return [];
+    const tipo = $("#askType").value;
+    return state.catalog.filter(s => !tipo || (s.tipo || "skill") === tipo).map(s => {
+      const nome = norm(s.nome), desc = norm(s.descricao), cat = norm(s.categoria);
+      let sc = 0;
+      for (const t of ts) { if (nome.includes(t)) sc += 4; if (desc.includes(t)) sc += 1.5; if (cat.includes(t)) sc += 1; }
+      if (sc && s.grupo !== "Composio" ) sc += .5;
+      if (s.instalacoes) sc += Math.min(2, Math.log10(s.instalacoes) / 3);
+      return [sc, s];
+    }).filter(x => x[0] > 0).sort((a,b) => b[0] - a[0]).slice(0, n).map(x => x[1]);
+  }
+  function localTerms(q) {
+    const words = norm(q).split(/[^a-z0-9@.+-]+/).filter(w => w.length > 2);
+    const out = [...words];
+    for (const w of words) for (const [k, v] of Object.entries(PT_EN)) if (w.startsWith(norm(k))) out.push(...v.split(" "));
+    return out;
+  }
+  const inAcervo = s => state.skills.some(k => norm(k.nome) === norm(s.nome) || (k.fonte && s.link && k.fonte === s.link));
+
+  async function runAsk(q) {
+    q = q.trim(); if (!q) return;
+    if (!state.catalog.length) { state.disc = { q, items: [], answer: "O catálogo ainda está carregando. Tente de novo em instantes.", loading: false }; renderDiscover(); return; }
+    state.disc = { q, items: [], answer: "", loading: true, mode: "" }; renderDiscover();
+    if (sample) {
+      try {
+        const termos = await sample.json(
+          "Transforme a necessidade abaixo em 6 a 12 palavras-chave de busca EM INGLÊS para achar skills de agentes de IA (inclua sinônimos e nomes de apps/ferramentas prováveis). Responda só com um array JSON de strings.\n\nNecessidade: " + q,
+          { modelTier: "quick" });
+        const cands = searchCatalog([...(Array.isArray(termos) ? termos.map(String) : []), ...localTerms(q)], 45);
+        if (!cands.length) { state.disc = { q, items: [], answer: "Não achei nada no catálogo para isso. Tente com outras palavras, ou isso pode virar uma skill sua.", loading: false }; renderDiscover(); return; }
+        const meu = state.skills.map(k => k.nome).join(", ") || "nenhuma";
+        const r = await sample.json(
+          "Você é uma curadora de skills para agentes de IA e responde em português do Brasil, de forma direta e com um toque de humor leve. " +
+          "A pessoa perguntou: \"" + q + "\". Skills que ela já tem: " + meu + ".\n" +
+          "Escolha até 6 itens (skills ou plugins) da lista abaixo que realmente resolvem o pedido (pode ser menos; prefira as mais diretas e confiáveis). " +
+          "Responda SOMENTE com JSON: {\"resposta\": string (1-2 frases resumindo o que encontrou), \"skills\": [{\"id\": string, \"porque\": string (1 frase: o que ela faz e por que serve para o pedido)}]}.\n\nLISTA:\n" +
+          cands.map(s => `${s.id} | ${s.tipo === "plugin" ? "plugin" : "skill"} | ${s.nome} | ${s.fonte} | ${s.descricao.slice(0, 220)}`).join("\n"));
+        const byId = new Map(cands.map(s => [s.id, s]));
+        const items = (r?.skills || []).map(x => byId.get(x.id) ? { ...byId.get(x.id), porque: x.porque } : null).filter(Boolean);
+        state.disc = { q, items: items.length ? items : cands.slice(0, 6), answer: r?.resposta || "", loading: false, mode: "claude" };
+        renderDiscover(); return;
+      } catch (e) {
+        if (e?.code === "not_granted") sample = null;
+      }
+    }
+    const items = searchCatalog(localTerms(q), 9);
+    state.disc = { q, items, answer: items.length ? "Resultados pela busca por palavras." : "Não achei nada com essas palavras. Tente termos em inglês, como \"invoice\" ou \"instagram\".", loading: false, mode: "local" };
+    renderDiscover();
+  }
+
+  function renderDiscover() {
+    const i = state.catInfo;
+    $("#discMeta").textContent = state.catalog.length
+      ? `${state.catalog.filter(s => s.tipo !== "plugin").length} skills e ${state.catalog.filter(s => s.tipo === "plugin").length} plugins · atualizado em ${i?.atualizadoEm ? fmtDate(i.atualizadoEm) : "–"}`
+      : (state.catInfo === null && store.mode !== "loading" ? $("#discMeta").textContent : "Carregando o catálogo…");
+    const novas = (i?.novas || []).length;
+    $("#examples").innerHTML = (novas ? `<button class="ex new" type="button" data-novas>${novas} ${novas === 1 ? "novidade" : "novidades"} desde a última atualização</button>` : "") +
+      EXEMPLOS.map(e => `<button class="ex" type="button" data-ex="${esc(e)}">${esc(e)}</button>`).join("");
+    const d = state.disc, out = $("#discOut");
+    if (d.loading) { out.innerHTML = `<p class="answer"><span class="loading-dots">Procurando no catálogo</span></p>`; return; }
+    if (!d.q) { out.innerHTML = ""; return; }
+    out.innerHTML = (d.answer ? `<p class="answer">${esc(d.answer)}</p>` : "") +
+      (d.items.length ? `<div class="res" style="margin-top:12px">${d.items.map(s => `
+        <article class="rc" style="--cat:${catVar(s.categoria)}">
+          <div class="card-head"><span class="cat-label"><span class="dot"></span>${esc(s.categoria)}</span><span class="type">${s.tipo === "plugin" ? "Plugin" : "Skill"}</span></div>
+          <h3>${esc(s.nome)}</h3>
+          <span class="hint">${esc(s.fonte)}</span>
+          ${s.porque ? `<p class="why">${esc(s.porque)}</p>` : ""}
+          <p class="desc" lang="en">${esc(s.descricao)}</p>
+          ${s.instalacoes ? `<span class="hint">${s.instalacoes.toLocaleString("pt-BR")} instalações</span>` : ""}
+          ${s.tipo === "plugin" ? `<span class="hint">Rode dentro do Claude Code:</span>` : ""}<div class="cmd"><code>${esc(s.instalar)}</code><button type="button" data-copy="${esc(s.instalar)}">Copiar</button></div>
+          <div class="rc-actions">
+            <a href="${esc(s.link)}" target="_blank" rel="noopener">Ver no GitHub</a>
+            ${inAcervo(s) ? `<span class="badge-in">✓ Já está no acervo</span>` : state.canWrite ? `<button class="btn" type="button" data-adopt="${esc(s.id)}">Catalogar no acervo</button>` : ""}
+          </div>
+        </article>`).join("")}</div>` : "");
+  }
+
+  function adopt(id) {
+    const s = state.disc.items.find(x => x.id === id) || state.catalog.find(x => x.id === id); if (!s) return;
+    openForm(null);
+    const cats = allCats();
+    fillForm({ nome: s.nome, tipo: s.tipo === "plugin" ? "plugin" : "skill", categoria: cats.find(c => norm(c) === norm(s.categoria)) || s.categoria,
+      oQueFaz: s.porque || s.descricao, comoFaz: "", quandoUsar: "", tags: [s.grupo || s.fonte] });
+    $("#fFonte").value = s.link;
+    $("#fComo").value = "Instalar: " + s.instalar;
+    $("#pasteBox").value = `---\nname: ${s.nome}\ndescription: ${s.descricao}\n---`;
+    $("#pasteHint").textContent = sample ? "A descrição original está em inglês. Use Claude preenche a ficha para traduzir e detalhar." : "Revise os campos e salve.";
   }
 
   /* ---------- Formulário de ficha ---------- */
@@ -463,7 +616,7 @@ textarea.io{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px
     try {
       const r = await sample.json(
         "Você cataloga skills e bots de IA em português do Brasil. Leia o material abaixo e responda SOMENTE com um objeto JSON neste formato: " +
-        '{"nome":string,"tipo":"skill"|"bot"|"mcp","categoria":string,"oQueFaz":string,"comoFaz":string,"quandoUsar":string,"tags":string[]}. ' +
+        '{"nome":string,"tipo":"skill"|"bot"|"mcp"|"plugin","categoria":string,"oQueFaz":string,"comoFaz":string,"quandoUsar":string,"tags":string[]}. ' +
         "categoria deve ser uma destas, se alguma servir: " + allCats().join(", ") + ". oQueFaz: 1 a 2 frases diretas. comoFaz: o método em até 4 frases curtas. quandoUsar: situações ou frases que disparam. tags: até 5, minúsculas.\n\nMATERIAL:\n" + txt.slice(0, 12000),
         { modelTier: "quick" });
       if (r && typeof r === "object") { fillForm(r); $("#pasteHint").textContent = "Ficha preenchida. Revise antes de salvar."; }
@@ -476,9 +629,21 @@ textarea.io{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px
 
   /* ---------- Eventos ---------- */
   document.addEventListener("click", async e => {
-    const t = e.target.closest("[data-room],[data-open],[data-close],[data-edit],[data-rate],[data-delnote]");
+    const t = e.target.closest("[data-room],[data-open],[data-close],[data-edit],[data-rate],[data-delnote],[data-ex],[data-novas],[data-copy],[data-adopt]");
     if (!t) return;
-    if (t.hasAttribute("data-room")) { state.room = t.dataset.room; render(); }
+    if (t.dataset.ex) { $("#askQ").value = t.dataset.ex; runAsk(t.dataset.ex); }
+    else if (t.hasAttribute("data-novas")) {
+      const ids = new Set(state.catInfo?.novas || []);
+      state.disc = { q: "novidades", items: state.catalog.filter(s => ids.has(s.id)), answer: "Skills que entraram no catálogo na última atualização.", loading: false };
+      renderDiscover();
+    }
+    else if (t.dataset.copy) {
+      try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = "Copiado"; }
+      catch { const c = t.previousElementSibling; const r = document.createRange(); r.selectNodeContents(c); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); t.textContent = "Selecionado"; }
+      setTimeout(() => t.textContent = "Copiar", 1800);
+    }
+    else if (t.dataset.adopt) adopt(t.dataset.adopt);
+    else if (t.hasAttribute("data-room")) { state.room = t.dataset.room; render(); }
     else if (t.dataset.open) { state.openId = t.dataset.open; state.rating = 0; renderDetail(); $("#dDetail").showModal(); }
     else if (t.hasAttribute("data-close")) { t.closest("dialog").close(); }
     else if (t.dataset.edit) { openForm(t.dataset.edit); }
@@ -510,6 +675,7 @@ textarea.io{width:100%;min-height:200px;font-family:var(--f-mono);font-size:12px
   $("#fType").addEventListener("change", e => { state.type = e.target.value; renderGrid(); });
   $("#sort").addEventListener("change", e => { state.sort = e.target.value; renderGrid(); try { localStorage.setItem("gabinete.sort", state.sort); } catch {} });
   $("#btnNew").addEventListener("click", () => openForm(null));
+  $("#askForm").addEventListener("submit", e => { e.preventDefault(); runAsk($("#askQ").value); });
   $("#btnParse").addEventListener("click", () => {
     const txt = $("#pasteBox").value.trim();
     if (!txt) { $("#pasteHint").textContent = "Cole o conteúdo da skill primeiro."; return; }
