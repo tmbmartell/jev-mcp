@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Meu Caderno</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Patrick+Hand&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -20,6 +21,7 @@
   --cover: #2f5d50;
   --ui-bg: #fffaf0;
   --ui-ink: #3b2f2a;
+  color-scheme: light;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
@@ -32,6 +34,8 @@ body{
     linear-gradient(160deg, var(--desk1), var(--desk2));
   overflow:hidden;
   display:flex;flex-direction:column;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
 }
 
 /* ---------- barra de ferramentas ---------- */
@@ -197,12 +201,11 @@ select.btn{padding:0 6px}
   content:"";position:absolute;top:-11px;left:50%;transform:translateX(-50%) rotate(2deg);
   width:80px;height:22px;background:rgba(170,210,255,.7);
 }
-.item-link .yt{width:100%;display:block;border-radius:3px;margin-bottom:6px;pointer-events:none}
+.item-link .yt{display:inline-block;background:#e53935;color:#fff;font-size:13px;padding:1px 8px;border-radius:6px;margin-bottom:6px;pointer-events:none}
 .item-link .row{display:flex;gap:8px;align-items:center;pointer-events:none}
-.item-link .fav{width:22px;height:22px;flex:none}
 .item-link .lbl{font-weight:700;font-size:18px;line-height:1.2;overflow:hidden;text-overflow:ellipsis}
 .item-link .url{font-size:13px;color:#8a6d3b;word-break:break-all;margin-top:4px;pointer-events:none}
-.item-link .open{font-size:12px;color:#b45309;margin-top:6px;pointer-events:none}
+.item-link .open{display:inline-block;font-size:14px;color:#b45309;margin-top:6px;cursor:pointer}
 
 /* capa */
 .cover{
@@ -384,6 +387,16 @@ input[type=file]{display:none}
   </div>
 </div>
 
+<div class="modal-bg" id="askModal">
+  <div class="modal">
+    <h3 id="askMsg">Tem certeza?</h3>
+    <div class="acts">
+      <button class="btn" id="askNo">Não</button>
+      <button class="btn on" id="askYes">Sim</button>
+    </div>
+  </div>
+</div>
+
 <input type="file" id="fileImg" accept="image/*" multiple>
 <input type="file" id="fileImport" accept=".json,application/json">
 <div class="toast" id="toast"></div>
@@ -435,8 +448,10 @@ function save() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     try {
+      state.updatedAt = Date.now();
       await DB.set('state', state);
       $('#status').textContent = 'salvo ✓';
+      Cloud.schedule();
     } catch (e) {
       $('#status').textContent = 'erro ao salvar!';
       console.error(e);
@@ -452,7 +467,8 @@ function toast(msg) {
 let scale = 1;
 function fit() {
   const st = $('#stage').getBoundingClientRect();
-  scale = Math.min((st.width - 150) / PW, (st.height - 30) / PH, 1.25);
+  const side = st.width > 760 ? 150 : 10;
+  scale = Math.min((st.width - side) / PW, (st.height - 30) / PH, 1.25);
   scale = Math.max(scale, 0.3);
   $('#scaler').style.transform = `scale(${scale})`;
 }
@@ -466,6 +482,17 @@ window.addEventListener('resize', fit);
 
 /* ---------- construção das vistas ---------- */
 function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function openUrl(u) {
+  const a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function askConfirm(msg) {
+  return new Promise(res => {
+    $('#askMsg').textContent = msg; $('#askModal').classList.add('open');
+    const done = v => { $('#askModal').classList.remove('open'); $('#askYes').onclick = $('#askNo').onclick = null; res(v); };
+    $('#askYes').onclick = () => done(true); $('#askNo').onclick = () => done(false);
+  });
+}
 function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } }
 function ytId(u) {
   const m = u.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/);
@@ -542,11 +569,11 @@ function buildItem(it, interactive) {
   } else if (it.type === 'link') {
     const yt = ytId(it.url);
     el.innerHTML = `<div class="card">
-      ${yt ? `<img class="yt" src="https://img.youtube.com/vi/${yt}/hqdefault.jpg" onerror="this.remove()">` : ''}
-      <div class="row"><img class="fav" src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostOf(it.url))}&sz=64" onerror="this.remove()">
-      <div class="lbl">${escapeHtml(it.label || hostOf(it.url))}</div></div>
+      ${yt ? `<span class="yt">▶ YouTube</span>` : ''}
+      <div class="row"><div class="lbl">${escapeHtml(it.label || hostOf(it.url))}</div></div>
       <div class="url">${escapeHtml(it.url)}</div>
-      <div class="open">clique para abrir ↗</div></div>`;
+      <a class="open" href="${escapeHtml(it.url)}" target="_blank" rel="noopener">abrir link ↗</a></div>`;
+    el.querySelector('.open').addEventListener('pointerdown', e => e.stopPropagation());
   }
   applyGeom(el, it);
   if (interactive) {
@@ -601,7 +628,6 @@ function wireItem(el, it) {
     const up = () => {
       el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up);
       if (moved) save();
-      else if (it.type === 'link') window.open(it.url, '_blank', 'noopener');
     };
     el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up);
   });
@@ -664,7 +690,7 @@ function wirePage(el, p) {
   // links no texto: Ctrl+clique (ou clique simples quando não estiver editando)
   text.addEventListener('click', e => {
     const a = e.target.closest('a');
-    if (a && (e.ctrlKey || e.metaKey)) { e.preventDefault(); window.open(a.href, '_blank', 'noopener'); }
+    if (a && (e.ctrlKey || e.metaKey)) { e.preventDefault(); openUrl(a.href); }
   });
   text.addEventListener('mouseover', e => { const a = e.target.closest('a'); if (a) a.title = a.href + '\n(Ctrl+clique para abrir)'; });
 
@@ -801,7 +827,9 @@ function addImageFile(file, x = 150, y = 150) {
         c.getContext('2d').drawImage(img, 0, 0, w, h);
         src = file.type === 'image/png' ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.88);
       }
-      addItem({ id: uid(), type: 'img', src, x, y, w: 260, rot: Math.round(Math.random() * 8 - 4), cap: '' });
+      const it = { id: uid(), type: 'img', src, x, y, w: 260, rot: Math.round(Math.random() * 8 - 4), cap: '' };
+      addItem(it);
+      Cloud.uploadImage(it);
     };
     img.src = r.result;
   };
@@ -824,8 +852,7 @@ book.addEventListener('drop', e => {
   const url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
   if (url && /^(https?:\/\/|www\.)/i.test(url.trim())) {
     const u = normUrl(url.split('\n')[0]);
-    if (/\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(u)) addItem({ id: uid(), type: 'img', src: u, x, y, w: 260, rot: 0, cap: '' });
-    else addItem({ id: uid(), type: 'link', url: u, label: '', x, y, w: 240, rot: Math.round(Math.random() * 6 - 3) });
+    addItem({ id: uid(), type: 'link', url: u, label: '', x, y, w: 240, rot: Math.round(Math.random() * 6 - 3) });
   }
 });
 
@@ -912,11 +939,13 @@ $('#addPage').onclick = () => {
 };
 $('#delPage').onclick = () => {
   const p = curPage(); if (!p) return;
-  if (!confirm('Arrancar esta página? (não dá para desfazer)')) return;
+  askConfirm('Arrancar esta página? Não dá para desfazer.').then(ok => {
+  if (!ok) return;
   state.pages.splice(state.current, 1);
   if (!state.pages.length) state.pages.push(newPage());
   state.current = Math.min(state.current, state.pages.length - 1);
   render(); save(); toast('Página arrancada 📄✂️');
+  });
 };
 $('#paperSel').onchange = e => { const p = curPage(); if (!p) return; p.paper = e.target.value; render(); save(); };
 $('#jump').onchange = e => goTo(+e.target.value);
@@ -933,11 +962,17 @@ document.addEventListener('keydown', e => {
 document.addEventListener('pointerdown', e => { if (!e.target.closest('.item')) document.querySelectorAll('.item.sel').forEach(x => x.classList.remove('sel')); });
 
 /* ---------- backup ---------- */
-$('#exportBtn').onclick = () => {
+$('#exportBtn').onclick = async () => {
   const blob = new Blob([JSON.stringify(state)], { type: 'application/json' });
+  const filename = `caderno-${new Date().toISOString().slice(0, 10)}.json`;
+  if (Cloud.downloads) {
+    try { await Cloud.downloads.save({ filename, data: blob }); toast('Cópia de segurança salva 💾'); }
+    catch (e) { toast('A cópia não foi salva'); }
+    return;
+  }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `caderno-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = filename;
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   toast('Cópia de segurança baixada 💾');
 };
@@ -949,22 +984,114 @@ $('#fileImport').onchange = e => {
     try {
       const s = JSON.parse(r.result);
       if (!Array.isArray(s.pages)) throw new Error('arquivo inválido');
-      if (!confirm('Substituir o caderno atual por esta cópia?')) return;
-      state = s; state.current = -1; render(); save(); toast('Caderno restaurado 📂');
-    } catch (err) { alert('Não consegui abrir esse arquivo: ' + err.message); }
+      askConfirm('Trocar o caderno atual por esta cópia?').then(ok => {
+        if (!ok) return;
+        state = s; state.current = -1; render(); save(); toast('Caderno restaurado 📂');
+      });
+    } catch (err) { toast('Não consegui abrir esse arquivo: ' + err.message); }
   };
   r.readAsText(f); e.target.value = '';
 };
 
+/* ---------- nuvem: guarda o caderno na sua conta (só você vê) ---------- */
+const Cloud = {
+  db: null, uid: null, assets: null, downloads: null, ready: false,
+  synced: {}, timer: null, busy: false, again: false, warned: false,
+  col() { return this.db.collection('data/users/' + this.uid); },
+  metaOf(s) { return { title: s.title, subtitle: s.subtitle, coverColor: s.coverColor, order: s.pages.map(p => p.id), current: s.current, updatedAt: s.updatedAt || 0 }; },
+  async start(hasLocal) {
+    if (!window.claude || !window.claude.use) return;
+    try {
+      const [db, user, assets, downloads] = await Promise.all([
+        claude.use('db'), claude.use('user'), claude.use('assets'), claude.use('downloads')]);
+      this.assets = assets; this.downloads = downloads;
+      if (!db || !user) return;
+      this.uid = await user.id();
+      if (!this.uid) return;
+      this.db = db;
+      $('#status').textContent = 'abrindo…';
+      const snap = await Promise.race([this.col().get(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))]);
+      const docs = {}; snap.docs.forEach(d => docs[d.id] = d.data());
+      const meta = docs.meta;
+      if (meta && (!hasLocal || (meta.updatedAt || 0) > (state.updatedAt || 0))) {
+        const pages = (meta.order || []).map(id => docs['p_' + id]).filter(Boolean);
+        if (pages.length) {
+          state = { title: meta.title, subtitle: meta.subtitle, coverColor: meta.coverColor, current: meta.current ?? -1, updatedAt: meta.updatedAt, pages };
+          document.title = state.title || 'Meu Caderno';
+          render();
+          try { await DB.set('state', state); } catch {}
+        }
+      }
+      // marca o que já está igual na nuvem
+      Object.entries(docs).forEach(([k, v]) => this.synced[k] = JSON.stringify(v));
+      this.ready = true;
+      this.schedule(0);
+    } catch (e) {
+      console.warn('Nuvem indisponível', e);
+      $('#status').textContent = 'salvo ✓ (só aqui)';
+    }
+  },
+  schedule(ms = 1500) {
+    if (!this.ready) return;
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => this.flush(), ms);
+  },
+  async flush() {
+    if (this.busy) { this.again = true; return; }
+    this.busy = true;
+    try {
+      const want = { meta: this.metaOf(state) };
+      state.pages.forEach(p => want['p_' + p.id] = p);
+      let wrote = false;
+      for (const [k, v] of Object.entries(want)) {
+        const j = JSON.stringify(v);
+        if (this.synced[k] === j) continue;
+        if (k !== 'meta' && j.length > 250000) {
+          if (!this.warned) { toast('Página muito pesada para a nuvem; ficou salva só aqui'); this.warned = true; }
+          continue;
+        }
+        $('#status').textContent = 'salvando na nuvem…';
+        await this.col().doc(k).set(JSON.parse(j));
+        this.synced[k] = j; wrote = true;
+      }
+      for (const k of Object.keys(this.synced)) {
+        if (!(k in want)) { await this.col().doc(k).delete(); delete this.synced[k]; wrote = true; }
+      }
+      $('#status').textContent = 'salvo ☁️✓';
+    } catch (e) {
+      console.warn(e);
+      $('#status').textContent = 'salvo ✓ (só aqui)';
+    } finally {
+      this.busy = false;
+      if (this.again) { this.again = false; this.schedule(500); }
+    }
+  },
+  async uploadImage(it) {
+    if (!this.assets || !it.src.startsWith('data:')) return;
+    try {
+      const [head, b64] = it.src.split(',');
+      const type = head.match(/data:([^;]+)/)[1];
+      const bin = atob(b64), arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      const r = await this.assets.upload(new Blob([arr], { type }));
+      it.src = r.url;
+      document.querySelectorAll(`.item[data-id="${it.id}"] img`).forEach(img => img.src = r.url);
+      save();
+    } catch (e) { console.warn('Imagem ficou só neste computador', e); }
+  }
+};
+
 /* ---------- iniciar ---------- */
 (async () => {
+  let hasLocal = false;
   try {
     await DB.open();
     const s = await DB.get('state');
-    if (s && Array.isArray(s.pages) && s.pages.length) state = s;
-  } catch (e) { console.warn('Sem IndexedDB, usando só memória', e); toast('Atenção: este navegador não está salvando'); }
+    if (s && Array.isArray(s.pages) && s.pages.length) { state = s; hasLocal = true; }
+  } catch (e) { console.warn('Sem armazenamento local', e); }
   document.title = state.title || 'Meu Caderno';
   fit(); render();
+  Cloud.start(hasLocal);
 })();
 </script>
 </body>
