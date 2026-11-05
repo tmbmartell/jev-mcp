@@ -463,9 +463,10 @@ let state = {
 };
 
 let saveTimer = null;
-function save() {
+function save(touch = true) {
+  // touch = houve edição de verdade nesta página (virar a folha NÃO conta)
   const p = curPage();
-  if (p) p.u = Date.now();
+  if (p && touch) p.u = Date.now();
   state.updatedAt = Date.now();
   $('#status').textContent = 'salvando…';
   clearTimeout(saveTimer);
@@ -953,8 +954,7 @@ function goTo(idx) {
     setTimeout(() => { state.current = idx; render(); f.remove(); animating = false; }, dur);
   }
   playFlipSound();
-  state.updatedAt = Date.now();
-  save();
+  save(false);
 }
 let actx = null;
 function playFlipSound() {
@@ -1133,6 +1133,11 @@ document.addEventListener('keydown', e => {
   }
 });
 document.addEventListener('pointerdown', e => { if (!e.target.closest('.item')) selectItem(null); });
+document.addEventListener('focusout', () => setTimeout(() => {
+  if (Cloud.pendingRender && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#view'))) {
+    Cloud.pendingRender = false; render();
+  }
+}, 50));
 
 /* ---------- cópia de segurança ---------- */
 $('#exportBtn').onclick = async () => {
@@ -1179,15 +1184,19 @@ const Cloud = {
     return { title: s.title, subtitle: s.subtitle, coverColor: s.coverColor, order: s.pages.map(p => p.id),
       current: s.current, updatedAt: s.updatedAt || 0, deleted: (s.deleted || []).slice(-500) };
   },
+  offline() {
+    $('#status').textContent = DB.db ? 'salvo ✓ (só aqui)' : '⚠️ não está salvando';
+    if (!DB.db) toast('Atenção: este navegador não está guardando o caderno. Use o 💾 para salvar uma cópia.', 8000);
+  },
   async start(hasLocal) {
     if (!window.claude || !window.claude.use) return;
     try {
       const [db, user, assets, downloads] = await Promise.all([
         claude.use('db'), claude.use('user'), claude.use('assets'), claude.use('downloads')]);
       this.assets = assets; this.downloads = downloads;
-      if (!db || !user) { $('#status').textContent = 'salvo ✓ (só aqui)'; return; }
+      if (!db || !user) { this.offline(); return; }
       this.uid = await user.id();
-      if (!this.uid) { $('#status').textContent = 'salvo ✓ (só aqui)'; return; }
+      if (!this.uid) { this.offline(); return; }
       this.db = db;
       $('#status').textContent = 'abrindo…';
       const snap = await Promise.race([this.col().get(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 12000))]);
@@ -1196,6 +1205,7 @@ const Cloud = {
       this.merge(docs);
       Object.entries(docs).forEach(([k, v]) => this.synced[k] = JSON.stringify(v));
       this.ready = true;
+      this.listen();
       this.schedule(0);
     } catch (e) {
       console.warn('Nuvem indisponível', e);
@@ -1239,6 +1249,64 @@ const Cloud = {
       render();
       DB.set('state', state).catch(() => {});
     }
+  },
+  /* ouve a nuvem o tempo todo: o que você escreve num aparelho aparece no outro */
+  listen() {
+    this.unsub = this.col().onSnapshot(snap => {
+      let changed = false, currentChanged = false;
+      for (const ch of snap.docChanges()) {
+        if (ch.type === 'removed') continue;
+        const k = ch.doc.id, v = ch.doc.data(), j = JSON.stringify(v);
+        if (this.synced[k] === j) continue; // é o eco do que este aparelho mesmo salvou
+        this.synced[k] = j;
+        if (k.startsWith('i_')) {
+          this.imgCache[k] = v.src;
+          state.pages.forEach(p => p.items.forEach(it => { if (it.src === 'ref:' + k) { it.src = v.src; changed = true; } }));
+        } else if (k.startsWith('p_')) {
+          const id = k.slice(2);
+          if ((state.deleted || []).includes(id)) continue;
+          const page = JSON.parse(j);
+          page.items = (page.items || []).map(it => (it.type === 'img' && it.src && it.src.startsWith('ref:') && this.imgCache[it.src.slice(4)]) ? { ...it, src: this.imgCache[it.src.slice(4)] } : it);
+          const i = state.pages.findIndex(p => p.id === id);
+          if (i < 0) { state.pages.push(page); changed = true; }
+          else if ((page.u || 0) > (state.pages[i].u || 0)) {
+            state.pages[i] = page; changed = true;
+            if (i === state.current) currentChanged = true;
+          }
+        } else if (k === 'meta') {
+          const del = new Set([...(state.deleted || []), ...(v.deleted || [])]);
+          state.deleted = [...del];
+          const before = state.pages.length;
+          const curId = curPage() && curPage().id;
+          state.pages = state.pages.filter(p => !del.has(p.id));
+          // segue a ordem da nuvem; páginas que só existem aqui vão para o fim
+          const order = v.order || [];
+          state.pages.sort((a, b) => {
+            const ia = order.indexOf(a.id), ib = order.indexOf(b.id);
+            return (ia < 0 ? 1e9 : ia) - (ib < 0 ? 1e9 : ib);
+          });
+          if (!state.pages.length) state.pages.push(newPage());
+          if (curId) { const ni = state.pages.findIndex(p => p.id === curId); state.current = ni >= 0 ? ni : Math.min(state.current, state.pages.length - 1); }
+          if ((v.updatedAt || 0) > (state.updatedAt || 0)) { state.title = v.title; state.subtitle = v.subtitle; state.coverColor = v.coverColor; }
+          changed = true;
+          if (before !== state.pages.length || state.current < 0) currentChanged = true;
+        }
+      }
+      if (!changed) return;
+      DB.set('state', state).catch(() => {});
+      refreshJump();
+      if (currentChanged || state.current < 0) this.refreshView();
+      $('#status').textContent = 'atualizado ☁️✓';
+    }, err => {
+      console.warn(err);
+      $('#status').textContent = 'sem conexão — salvo aqui';
+    });
+  },
+  /* redesenha a folha sem atrapalhar quem está digitando nela */
+  refreshView() {
+    const editing = document.activeElement && document.activeElement.closest && document.activeElement.closest('#view');
+    if (!editing || animating) { if (!animating) render(); return; }
+    this.pendingRender = true;
   },
   schedule(ms = 1500) {
     if (!this.ready) return;
