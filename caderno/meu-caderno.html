@@ -56,7 +56,7 @@ body{
 .btn{
   font-family:inherit;font-size:17px;min-width:34px;height:34px;padding:0 9px;
   border:1px solid var(--ui-line);background:var(--white);border-radius:9px;cursor:pointer;color:var(--ui-ink);
-  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;
   transition:transform .1s, background .15s;
 }
 .btn:hover{background:#fff3d6;transform:translateY(-1px)}
@@ -292,6 +292,12 @@ select.btn{padding:0 6px}
   display:none;align-items:center;justify-content:center;font-size:30px;color:#7a4a0a;pointer-events:none}
 .drop-hint.on{display:flex}
 input[type=file]{display:none}
+@media (max-width: 700px){
+  .drawer{top:auto;left:0;width:auto;max-width:none;height:46vh;transform:translateY(105%);border-radius:16px 16px 0 0;
+    padding-bottom:env(safe-area-inset-bottom, 0px);padding-left:env(safe-area-inset-left, 0px)}
+  .drawer .grid{grid-template-columns:repeat(6,1fr)}
+  .drawer .grid button.wordbtn{grid-column:span 3}
+}
 @media (prefers-reduced-motion: reduce){ .drawer{transition:none} }
 </style>
 </head>
@@ -456,7 +462,11 @@ const DB = {
   }
 };
 
-const newPage = () => ({ id: uid(), title: '', date: today(), html: '', paper: 'lined', items: [], u: Date.now() });
+/* "relógio" do caderno: sempre anda para frente, mesmo se o relógio do celular e do computador estiverem diferentes */
+let clock = 0;
+function tick() { clock = Math.max(Date.now(), clock + 1); return clock; }
+function seen(u) { if (u > clock) clock = u; }
+const newPage = () => ({ id: uid(), title: '', date: today(), html: '', paper: 'lined', items: [], u: tick() });
 let state = {
   title: 'Meu Caderno', subtitle: 'ideias, histórias & links', coverColor: '#2f5d50',
   pages: [newPage()], current: -1, updatedAt: 0, deleted: []
@@ -466,8 +476,8 @@ let saveTimer = null;
 function save(touch = true) {
   // touch = houve edição de verdade nesta página (virar a folha NÃO conta)
   const p = curPage();
-  if (p && touch) p.u = Date.now();
-  state.updatedAt = Date.now();
+  if (p && touch) p.u = tick();
+  state.updatedAt = tick();
   $('#status').textContent = 'salvando…';
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
@@ -705,14 +715,25 @@ function wireItem(el, it) {
   });
 }
 function addItem(it) {
-  const page = curPage();
-  if (!page) { needPage(); return null; }
-  page.items.push(it);
-  const el = buildItem(it, true);
-  $('#view .layer').appendChild(el);
-  selectItem(el);
-  save();
-  return el;
+  try {
+    const page = curPage();
+    if (!page) { needPage(); return null; }
+    let layer = $('#view .layer');
+    if (!layer) { render(); layer = $('#view .layer'); }
+    page.items.push(it);
+    const el = buildItem(it, true);
+    layer.appendChild(el);
+    selectItem(el);
+    el.animate([{ scale: '0.2', opacity: 0 }, { scale: '1.15', opacity: 1 }, { scale: '1' }], { duration: 420, easing: 'ease-out' });
+    // em tela pequena a gaveta cobre a folha: fecha para você ver onde colou
+    if (innerWidth < 900) closeDrawer();
+    save();
+    return el;
+  } catch (e) {
+    console.error(e);
+    toast('Não consegui colar: ' + e.message, 6000);
+    return null;
+  }
 }
 
 /* ---------- seleção de texto (guardada sempre que muda) ---------- */
@@ -944,7 +965,7 @@ function goTo(idx) {
     book.appendChild(f);
     f.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(-180deg)' }], { duration: dur, easing: ease });
     shade.animate([{ opacity: 0 }, { opacity: 1 }], { duration: dur / 2, easing: 'ease-in' });
-    setTimeout(() => { f.remove(); animating = false; }, dur);
+    setTimeout(() => { f.remove(); animating = false; if (Cloud.pendingRender) { Cloud.pendingRender = false; render(); } }, dur);
   } else {
     const { f, shade } = makeFlipper(buildView(idx, false));
     book.appendChild(f);
@@ -1097,7 +1118,8 @@ $('#stGrid').addEventListener('dragstart', e => {
   e.dataTransfer.effectAllowed = 'copy';
 });
 $('#stickBtn').onclick = () => { if (needPage()) $('#drawer').classList.add('open'); };
-$('#closeDrawer').onclick = () => $('#drawer').classList.remove('open');
+function closeDrawer() { $('#drawer').classList.remove('open'); if (document.activeElement && document.activeElement.closest('#drawer')) document.activeElement.blur(); }
+$('#closeDrawer').onclick = closeDrawer;
 renderStickers();
 
 /* ---------- páginas ---------- */
@@ -1125,7 +1147,7 @@ document.addEventListener('keydown', e => {
   if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); goTo(state.current - 1); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); toast('Salvo ✓'); }
   if (e.key === 'Escape') {
-    $('#drawer').classList.remove('open'); $('#linkModal').classList.remove('open'); closeMenus(); selectItem(null);
+    closeDrawer(); $('#linkModal').classList.remove('open'); closeMenus(); selectItem(null);
     if (marker) { setMarker(null); toast('Marca-texto desligado'); }
   }
   if (e.key === 'Delete' && (document.activeElement === document.body || !document.activeElement)) {
@@ -1165,7 +1187,7 @@ $('#fileImport').onchange = e => {
       const old = state.pages.map(p => p.id);
       state = Object.assign({ deleted: [] }, s);
       state.deleted = [...new Set([...(state.deleted || []), ...old.filter(id => !s.pages.some(p => p.id === id))])];
-      state.pages.forEach(p => p.u = Date.now());
+      state.pages.forEach(p => p.u = tick());
       state.current = -1; render(); save(); toast('Caderno restaurado 📂');
     } catch (err) { toast('Não consegui abrir esse arquivo: ' + err.message); }
   };
@@ -1218,7 +1240,8 @@ const Cloud = {
     if (!meta) return;
     const deleted = new Set([...(meta.deleted || []), ...(state.deleted || [])]);
     const cloudPages = {};
-    Object.entries(docs).forEach(([k, v]) => { if (k.startsWith('p_')) cloudPages[k.slice(2)] = v; });
+    Object.entries(docs).forEach(([k, v]) => { if (k.startsWith('p_')) { cloudPages[k.slice(2)] = v; seen(v.u || 0); } });
+    seen(meta.updatedAt || 0);
     const localPages = {}; state.pages.forEach(p => localPages[p.id] = p);
     const cloudNewer = (meta.updatedAt || 0) > (state.updatedAt || 0);
     const order = [];
@@ -1266,14 +1289,20 @@ const Cloud = {
           const id = k.slice(2);
           if ((state.deleted || []).includes(id)) continue;
           const page = JSON.parse(j);
+          seen(page.u || 0);
           page.items = (page.items || []).map(it => (it.type === 'img' && it.src && it.src.startsWith('ref:') && this.imgCache[it.src.slice(4)]) ? { ...it, src: this.imgCache[it.src.slice(4)] } : it);
           const i = state.pages.findIndex(p => p.id === id);
           if (i < 0) { state.pages.push(page); changed = true; }
           else if ((page.u || 0) > (state.pages[i].u || 0)) {
-            state.pages[i] = page; changed = true;
+            // atualiza a MESMA página (sem trocar o objeto), para a folha aberta continuar ligada a ela
+            const cur = state.pages[i];
+            Object.keys(cur).forEach(key => delete cur[key]);
+            Object.assign(cur, page);
+            changed = true;
             if (i === state.current) currentChanged = true;
           }
         } else if (k === 'meta') {
+          seen(v.updatedAt || 0);
           const del = new Set([...(state.deleted || []), ...(v.deleted || [])]);
           state.deleted = [...del];
           const before = state.pages.length;
@@ -1304,8 +1333,18 @@ const Cloud = {
   },
   /* redesenha a folha sem atrapalhar quem está digitando nela */
   refreshView() {
-    const editing = document.activeElement && document.activeElement.closest && document.activeElement.closest('#view');
-    if (!editing || animating) { if (!animating) render(); return; }
+    const ae = document.activeElement;
+    const inView = ae && ae.closest && ae.closest('#view');
+    const inText = ae && ae.closest && ae.closest('#view .text');
+    if (animating) { this.pendingRender = true; return; }
+    if (!inView) { render(); return; }
+    if (inText && curPage()) {
+      // você está escrevendo: atualiza só as figurinhas/lembretes/imagens, sem mexer no texto
+      const layer = $('#view .layer');
+      layer.innerHTML = '';
+      curPage().items.forEach(it => layer.appendChild(buildItem(it, true)));
+      return;
+    }
     this.pendingRender = true;
   },
   schedule(ms = 1500) {
@@ -1378,7 +1417,8 @@ const Cloud = {
     if (s && Array.isArray(s.pages) && s.pages.length) { state = Object.assign({ deleted: [] }, s); hasLocal = true; }
   } catch (e) { console.warn('Sem armazenamento local', e); }
   // páginas antigas sem fonte/tamanho/data de mudança
-  state.pages.forEach(p => { p.items = p.items || []; if (!p.u) p.u = 1; });
+  state.pages.forEach(p => { p.items = p.items || []; if (!p.u) p.u = 1; seen(p.u); });
+  seen(state.updatedAt || 0);
   document.title = state.title || 'Meu Caderno';
   fit(); render();
   Cloud.start(hasLocal);
