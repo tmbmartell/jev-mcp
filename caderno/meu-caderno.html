@@ -714,8 +714,12 @@ function wireItem(el, it) {
     rot.addEventListener('pointermove', mv); rot.addEventListener('pointerup', up);
   });
 }
+function unlockPages() {
+  state.pages = state.pages.map(p => Object.isFrozen(p) || Object.isFrozen(p.items || []) ? JSON.parse(JSON.stringify(p)) : p);
+}
 function addItem(it) {
   try {
+    if (curPage() && (Object.isFrozen(curPage()) || Object.isFrozen(curPage().items))) { unlockPages(); render(); }
     const page = curPage();
     if (!page) { needPage(); return null; }
     let layer = $('#view .layer');
@@ -1222,7 +1226,7 @@ const Cloud = {
       this.db = db;
       $('#status').textContent = 'abrindo…';
       const snap = await Promise.race([this.col().get(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 12000))]);
-      const docs = {}; snap.docs.forEach(d => docs[d.id] = d.data());
+      const docs = {}; snap.docs.forEach(d => docs[d.id] = JSON.parse(JSON.stringify(d.data()))); // a nuvem entrega tudo trancado (só leitura)
       Object.entries(docs).forEach(([k, v]) => { if (k.startsWith('i_')) this.imgCache[k] = v.src; });
       this.merge(docs);
       Object.entries(docs).forEach(([k, v]) => this.synced[k] = JSON.stringify(v));
@@ -1279,7 +1283,7 @@ const Cloud = {
       let changed = false, currentChanged = false;
       for (const ch of snap.docChanges()) {
         if (ch.type === 'removed') continue;
-        const k = ch.doc.id, v = ch.doc.data(), j = JSON.stringify(v);
+        const k = ch.doc.id, j = JSON.stringify(ch.doc.data()), v = JSON.parse(j);
         if (this.synced[k] === j) continue; // é o eco do que este aparelho mesmo salvou
         this.synced[k] = j;
         if (k.startsWith('i_')) {
@@ -1420,6 +1424,7 @@ const Cloud = {
   state.pages.forEach(p => { p.items = p.items || []; if (!p.u) p.u = 1; seen(p.u); });
   seen(state.updatedAt || 0);
   document.title = state.title || 'Meu Caderno';
+  unlockPages();
   fit(); render();
   Cloud.start(hasLocal);
 })();
