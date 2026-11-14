@@ -368,6 +368,7 @@ input[type=file]{display:none}
   </div>
   <div class="grp">
     <select class="btn" id="jump" title="Ir para página"></select>
+    <button class="btn" id="syncBtn" title="Buscar atualizações dos outros aparelhos agora">🔄</button>
     <button class="btn" id="exportBtn" title="Salvar cópia de segurança (arquivo)">💾</button>
     <button class="btn" id="importBtn" title="Abrir cópia de segurança">📂</button>
     <span class="status" id="status">salvo ✓</span>
@@ -1165,6 +1166,13 @@ document.addEventListener('focusout', () => setTimeout(() => {
   }
 }, 50));
 
+$('#syncBtn').onclick = async () => {
+  if (!Cloud.ready) { toast('A nuvem não está ligada neste aparelho. Abra pelo link do Claude.'); return; }
+  $('#status').textContent = 'buscando…';
+  await Cloud.flush();
+  await Cloud.pull(true);
+};
+
 /* ---------- cópia de segurança ---------- */
 $('#exportBtn').onclick = async () => {
   const blob = new Blob([JSON.stringify(state)], { type: 'application/json' });
@@ -1280,10 +1288,35 @@ const Cloud = {
   /* ouve a nuvem o tempo todo: o que você escreve num aparelho aparece no outro */
   listen() {
     this.unsub = this.col().onSnapshot(snap => {
+      this.applyRemote(snap.docChanges().filter(ch => ch.type !== 'removed').map(ch => ch.doc));
+    }, err => {
+      console.warn(err);
+      $('#status').textContent = 'sem conexão — salvo aqui';
+    });
+    // reforço: além do canal ao vivo, busca a nuvem sozinho de tempos em tempos,
+    // quando você volta para o caderno e quando clica em 🔄
+    setInterval(() => { if (document.visibilityState === 'visible') this.pull(); }, 10000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.pull(); });
+    window.addEventListener('focus', () => this.pull());
+    window.addEventListener('online', () => { this.pull(); this.schedule(0); });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { clearTimeout(saveTimer); DB.set('state', state).catch(() => {}); this.flushNow(); } });
+  },
+  async pull(manual) {
+    if (!this.ready || this.pulling) return;
+    this.pulling = true;
+    try {
+      const snap = await this.col().get();
+      const n = this.applyRemote(snap.docs);
+      if (manual) toast(n ? 'Caderno atualizado ☁️' : 'Já está tudo atualizado ✓');
+    } catch (e) {
+      console.warn(e);
+      if (manual) toast('Sem conexão com a nuvem agora. O que você escreve fica salvo aqui e sobe quando voltar.');
+    } finally { this.pulling = false; }
+  },
+  applyRemote(docsIn) {
       let changed = false, currentChanged = false;
-      for (const ch of snap.docChanges()) {
-        if (ch.type === 'removed') continue;
-        const k = ch.doc.id, j = JSON.stringify(ch.doc.data()), v = JSON.parse(j);
+      for (const doc of docsIn) {
+        const k = doc.id, j = JSON.stringify(doc.data()), v = JSON.parse(j);
         if (this.synced[k] === j) continue; // é o eco do que este aparelho mesmo salvou
         this.synced[k] = j;
         if (k.startsWith('i_')) {
@@ -1325,15 +1358,12 @@ const Cloud = {
           if (before !== state.pages.length || state.current < 0) currentChanged = true;
         }
       }
-      if (!changed) return;
+      if (!changed) return 0;
       DB.set('state', state).catch(() => {});
       refreshJump();
       if (currentChanged || state.current < 0) this.refreshView();
-      $('#status').textContent = 'atualizado ☁️✓';
-    }, err => {
-      console.warn(err);
-      $('#status').textContent = 'sem conexão — salvo aqui';
-    });
+      $('#status').textContent = 'atualizado ☁️ ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      return 1;
   },
   /* redesenha a folha sem atrapalhar quem está digitando nela */
   refreshView() {
@@ -1356,6 +1386,7 @@ const Cloud = {
     clearTimeout(this.timer);
     this.timer = setTimeout(() => this.flush(), ms);
   },
+  flushNow() { if (this.ready) { clearTimeout(this.timer); this.flush(); } },
   async put(k, v) {
     const j = JSON.stringify(v);
     if (this.synced[k] === j) return;
