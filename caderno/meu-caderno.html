@@ -51,7 +51,7 @@ body{
   box-shadow:0 6px 18px rgba(0,0,0,.35);
   position:relative;z-index:80;
 }
-.toolbar .grp{display:flex;gap:4px;align-items:center;padding:0 6px;border-right:1px dashed #d8c8b0;position:relative}
+.toolbar .grp{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;align-items:center;padding:0 6px;border-right:1px dashed #d8c8b0;position:relative;max-width:100%}
 .toolbar .grp:last-child{border-right:0}
 .btn{
   font-family:inherit;font-size:17px;min-width:34px;height:34px;padding:0 9px;
@@ -292,6 +292,16 @@ select.btn{padding:0 6px}
   display:none;align-items:center;justify-content:center;font-size:30px;color:#7a4a0a;pointer-events:none}
 .drop-hint.on{display:flex}
 input[type=file]{display:none}
+/* selo que diz se este aparelho está na nuvem */
+.chip{font-size:15px;border-radius:999px;padding:0 12px}
+.chip.ok{background:#e3f6e5;border-color:#7cc68a;color:#1e5b2a}
+.chip.bad{background:#fde3e1;border-color:#e08a80;color:#8a2318;animation:pulse 1.6s ease-in-out 3}
+.chip.wait{background:#fff6dc}
+@keyframes pulse{50%{transform:scale(1.08)}}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:28px;letter-spacing:.15em;background:var(--white);border:2px dashed var(--accent);
+  display:inline-block;padding:4px 14px;border-radius:10px;margin:4px 0 8px}
+.linkbox{display:flex;gap:6px;margin-top:6px}
+.linkbox input{flex:1;min-width:0;font-size:14px}
 @media (max-width: 700px){
   .drawer{top:auto;left:0;width:auto;max-width:none;height:46vh;transform:translateY(105%);border-radius:16px 16px 0 0;
     padding-bottom:env(safe-area-inset-bottom, 0px);padding-left:env(safe-area-inset-left, 0px)}
@@ -372,6 +382,7 @@ input[type=file]{display:none}
     <button class="btn" id="exportBtn" title="Salvar cópia de segurança (arquivo)">💾</button>
     <button class="btn" id="importBtn" title="Abrir cópia de segurança">📂</button>
     <span class="status" id="status">salvo ✓</span>
+    <button class="btn chip wait" id="cloudChip" title="Este aparelho está na nuvem?">☁️ conectando…</button>
   </div>
 </div>
 
@@ -405,6 +416,17 @@ input[type=file]{display:none}
       <button class="btn" id="lmCancel">Cancelar</button>
       <button class="btn" id="lmText">Colocar no texto</button>
       <button class="btn on" id="lmCard">Colar como lembrete 📝</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="cloudModal">
+  <div class="modal">
+    <h3 id="cmTitle">Nuvem</h3>
+    <div id="cmBody"></div>
+    <div class="acts">
+      <button class="btn" id="cmMerge" title="Trazer para cá páginas de uma cópia 💾 feita em outro aparelho">📥 Juntar uma cópia</button>
+      <button class="btn on" id="cmClose">Entendi</button>
     </div>
   </div>
 </div>
@@ -1152,7 +1174,7 @@ document.addEventListener('keydown', e => {
   if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); goTo(state.current - 1); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); toast('Salvo ✓'); }
   if (e.key === 'Escape') {
-    closeDrawer(); $('#linkModal').classList.remove('open'); closeMenus(); selectItem(null);
+    closeDrawer(); $('#cloudModal').classList.remove('open'); $('#linkModal').classList.remove('open'); closeMenus(); selectItem(null);
     if (marker) { setMarker(null); toast('Marca-texto desligado'); }
   }
   if (e.key === 'Delete' && (document.activeElement === document.body || !document.activeElement)) {
@@ -1166,8 +1188,12 @@ document.addEventListener('focusout', () => setTimeout(() => {
   }
 }, 50));
 
+const ARTIFACT_URL = 'https://claude.ai/artifact/Q4i7gvPFB5icV4HJ1nkoj6';
+$('#cloudChip').onclick = () => Cloud.explain();
+$('#cmClose').onclick = () => $('#cloudModal').classList.remove('open');
+$('#cmMerge').onclick = () => $('#fileImport').click();
 $('#syncBtn').onclick = async () => {
-  if (!Cloud.ready) { toast('A nuvem não está ligada neste aparelho. Abra pelo link do Claude.'); return; }
+  if (!Cloud.ready) { Cloud.explain(); return; }
   $('#status').textContent = 'buscando…';
   await Cloud.flush();
   await Cloud.pull(true);
@@ -1188,6 +1214,7 @@ $('#exportBtn').onclick = async () => {
   toast('Cópia de segurança baixada 💾');
 };
 $('#importBtn').onclick = () => $('#fileImport').click();
+$('#importBtn').title = 'Juntar uma cópia de segurança (não apaga nada)';
 $('#fileImport').onchange = e => {
   const f = e.target.files[0]; if (!f) return;
   const r = new FileReader();
@@ -1195,12 +1222,24 @@ $('#fileImport').onchange = e => {
     try {
       const s = JSON.parse(r.result);
       if (!Array.isArray(s.pages)) throw new Error('arquivo inválido');
-      if (!await askConfirm('Trocar o caderno atual por esta cópia?')) return;
-      const old = state.pages.map(p => p.id);
-      state = Object.assign({ deleted: [] }, s);
-      state.deleted = [...new Set([...(state.deleted || []), ...old.filter(id => !s.pages.some(p => p.id === id))])];
-      state.pages.forEach(p => p.u = tick());
-      state.current = -1; render(); save(); toast('Caderno restaurado 📂');
+      // JUNTA a cópia com este caderno: nada daqui é apagado
+      const mine = {}; state.pages.forEach(p => mine[p.id] = p);
+      let added = 0, updated = 0;
+      for (const p of s.pages) {
+        if (!p.html && !p.title && !(p.items || []).length) continue; // página em branco
+        const copy = JSON.parse(JSON.stringify(p));
+        copy.items = copy.items || [];
+        if (!mine[p.id]) { copy.u = tick(); state.pages.push(copy); added++; }
+        else if (p.html !== mine[p.id].html || JSON.stringify(p.items || []) !== JSON.stringify(mine[p.id].items)) {
+          // a mesma página foi mudada nos dois lugares: guarda as duas versões
+          if ((p.u || 0) > (mine[p.id].u || 0) && !mine[p.id].html && !(mine[p.id].items || []).length) { Object.assign(mine[p.id], copy, { u: tick() }); updated++; }
+          else { copy.id = uid(); copy.title = (copy.title || 'Página') + ' (da cópia)'; copy.u = tick(); state.pages.push(copy); added++; }
+        }
+      }
+      state.deleted = (state.deleted || []).filter(id => !s.pages.some(p => p.id === id));
+      $('#cloudModal').classList.remove('open');
+      render(); save(); Cloud.flushNow();
+      toast(added || updated ? `Juntei ${added} página(s) nova(s)${updated ? ' e atualizei ' + updated : ''} 📥` : 'Essa cópia já estava toda aqui ✓', 5000);
     } catch (err) { toast('Não consegui abrir esse arquivo: ' + err.message); }
   };
   r.readAsText(f); e.target.value = '';
@@ -1218,12 +1257,61 @@ const Cloud = {
     return { title: s.title, subtitle: s.subtitle, coverColor: s.coverColor, order: s.pages.map(p => p.id),
       current: s.current, updatedAt: s.updatedAt || 0, deleted: (s.deleted || []).slice(-500) };
   },
-  offline() {
-    $('#status').textContent = DB.db ? 'salvo ✓ (só aqui)' : '⚠️ não está salvando';
-    if (!DB.db) toast('Atenção: este navegador não está guardando o caderno. Use o 💾 para salvar uma cópia.', 8000);
+  mode: 'wait',
+  code() {
+    // código curto do SEU caderno na nuvem: tem que ser igual em todos os aparelhos
+    let h = 2166136261;
+    for (const c of String(this.uid)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
+    return (h >>> 0).toString(36).toUpperCase().padStart(6, '0').slice(-6);
   },
+  setMode(mode) {
+    this.mode = mode;
+    const c = $('#cloudChip');
+    const look = {
+      wait: ['wait', '☁️ conectando…'],
+      ok: ['ok', '☁️ ' + (this.uid ? this.code() : 'nuvem')],
+      file: ['bad', '⚠️ só neste aparelho'],
+      signedout: ['bad', '⚠️ só neste aparelho'],
+      error: ['bad', '⚠️ sem nuvem agora'],
+    }[mode];
+    c.className = 'btn chip ' + look[0];
+    c.textContent = look[1];
+    if (mode !== 'ok' && mode !== 'wait') {
+      $('#status').textContent = DB.db ? 'salvo só aqui' : '⚠️ não está salvando';
+      if (mode !== 'error' && !this.warnedMode) { this.warnedMode = true; setTimeout(() => this.explain(), 900); }
+    }
+  },
+  explain() {
+    const box = $('#cmBody'), t = $('#cmTitle');
+    const n = state.pages.filter(p => p.html || (p.items || []).length || p.title).length;
+    const linkBox = `<div class="linkbox"><input id="cmLink" readonly value="${ARTIFACT_URL}"><button class="btn" id="cmCopy">Copiar</button></div>`;
+    if (this.mode === 'ok') {
+      t.textContent = '☁️ Este aparelho está na nuvem';
+      box.innerHTML = `<p>Tudo o que você escreve aqui vai para a sua conta do Claude e aparece nos outros aparelhos em poucos segundos.</p>
+        <p>Código do seu caderno:</p><div class="code">${this.code()}</div>
+        <p><b>Confira esse código no celular e no notebook.</b> Se for diferente em algum, aquele aparelho está em <b>outra conta do Claude</b>. Entre na mesma conta nele.</p>
+        <p>Páginas com conteúdo: ${n}.</p>`;
+    } else if (this.mode === 'file') {
+      t.textContent = '⚠️ Este caderno NÃO está na nuvem';
+      box.innerHTML = `<p>Você abriu o <b>arquivo</b> do caderno salvo neste computador. Ele guarda tudo só aqui e <b>nunca</b> aparece no celular.</p>
+        <p>Para ter o mesmo caderno em todo lugar, use sempre este link (e crie o atalho a partir dele):</p>${linkBox}
+        <p style="margin-top:10px"><b>Para não perder o que já escreveu aqui:</b> clique em 💾 para salvar uma cópia, abra o link e lá clique em <b>📥 Juntar uma cópia</b>.</p>`;
+    } else {
+      t.textContent = '⚠️ Este aparelho não está na nuvem';
+      box.innerHTML = `<p>O caderno não conseguiu ligar a sua conta do Claude neste aparelho, então o que você escrever fica <b>só aqui</b>.</p>
+        <p>Entre na sua conta do Claude neste aparelho e abra de novo pelo link:</p>${linkBox}
+        <p style="margin-top:10px">Assim que ligar, o que você escreveu aqui sobe sozinho para a nuvem.</p>`;
+    }
+    const cp = $('#cmCopy');
+    if (cp) cp.onclick = async () => {
+      try { await navigator.clipboard.writeText(ARTIFACT_URL); toast('Link copiado'); }
+      catch { const i = $('#cmLink'); i.focus(); i.select(); toast('Selecionei o link: copie com Ctrl+C'); }
+    };
+    $('#cloudModal').classList.add('open');
+  },
+  offline() { this.setMode('signedout'); },
   async start(hasLocal) {
-    if (!window.claude || !window.claude.use) return;
+    if (!window.claude || !window.claude.use) { this.setMode('file'); return; }
     try {
       const [db, user, assets, downloads] = await Promise.all([
         claude.use('db'), claude.use('user'), claude.use('assets'), claude.use('downloads')]);
@@ -1239,11 +1327,13 @@ const Cloud = {
       this.merge(docs);
       Object.entries(docs).forEach(([k, v]) => this.synced[k] = JSON.stringify(v));
       this.ready = true;
-      this.listen();
+      this.setMode('ok');
+      try { this.listen(); } catch (e) { console.warn('canal ao vivo indisponível; uso a busca periódica', e); this.startPolling(); }
       this.schedule(0);
     } catch (e) {
       console.warn('Nuvem indisponível', e);
-      $('#status').textContent = 'salvo ✓ (só aqui)';
+      this.setMode('error');
+      setTimeout(() => this.start(hasLocal), 20000); // tenta de novo sozinho
     }
   },
   /* junta o que está na nuvem com o que está neste navegador, página por página, sem perder nada */
@@ -1293,6 +1383,11 @@ const Cloud = {
       console.warn(err);
       $('#status').textContent = 'sem conexão — salvo aqui';
     });
+    this.startPolling();
+  },
+  startPolling() {
+    if (this.polling) return;
+    this.polling = true;
     // reforço: além do canal ao vivo, busca a nuvem sozinho de tempos em tempos,
     // quando você volta para o caderno e quando clica em 🔄
     setInterval(() => { if (document.visibilityState === 'visible') this.pull(); }, 10000);
@@ -1422,7 +1517,8 @@ const Cloud = {
       $('#status').textContent = 'salvo ☁️✓';
     } catch (e) {
       console.warn(e);
-      $('#status').textContent = 'salvo ✓ (só aqui)';
+      $('#status').textContent = 'não subiu ainda — tento de novo';
+      setTimeout(() => this.schedule(0), 15000);
     } finally {
       this.busy = false;
       if (this.again) { this.again = false; this.schedule(500); }
