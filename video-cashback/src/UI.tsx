@@ -82,13 +82,20 @@ export const Cena: React.FC<{ dur: number; children: React.ReactNode; fadeIn?: n
 };
 
 // ---------------- Legendas dinâmicas ----------------
-const DESTAQUES = /(\d|R\$|cashback|CBS|CPF|Cadastro|Único|derrama|quinto|automático|abril|janeiro|desafio|suficiente|menos)/i;
+const DESTAQUES = /(\d|R\$|cashback|CBS|CPF|Cadastro|Único|derrama|quinto|automático|abril|janeiro|desafio|suficiente|menos|Siga|Código|Público|compartilhe)/i;
+
+const MAX_CHARS = 26;
 
 const quebrar = (texto: string) => {
   const palavras = texto.split(/\s+/);
   const blocos: string[][] = [];
   let atual: string[] = [];
   palavras.forEach((w, i) => {
+    // no vertical, cada bloco cabe em UMA linha (até ~26 caracteres)
+    if (atual.length && [...atual, w].join(" ").length > MAX_CHARS) {
+      blocos.push(atual);
+      atual = [];
+    }
     atual.push(w);
     const fimFrase = /[.,:?!;]$/.test(w);
     const resto = palavras.length - i - 1;
@@ -98,7 +105,7 @@ const quebrar = (texto: string) => {
     }
   });
   if (atual.length) {
-    if (atual.length === 1 && blocos.length) blocos[blocos.length - 1].push(...atual);
+    if (atual.length === 1 && blocos.length && [...blocos[blocos.length - 1], ...atual].join(" ").length <= MAX_CHARS) blocos[blocos.length - 1].push(...atual);
     else blocos.push(atual);
   }
   return blocos;

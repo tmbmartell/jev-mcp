@@ -3,17 +3,21 @@ import json, os, re
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 t = json.load(open(os.path.join(ROOT, "src/tempos.json")))
 
+MAX_CHARS = 26
+
 def quebrar(texto):
     palavras = texto.split()
     blocos, atual = [], []
     for i, w in enumerate(palavras):
+        if atual and len(" ".join(atual + [w])) > MAX_CHARS:
+            blocos.append(atual); atual = []
         atual.append(w)
         fim = re.search(r"[.,:?!;]$", w) is not None
         resto = len(palavras) - i - 1
         if len(atual) >= 5 or (len(atual) >= 3 and fim) or (len(atual) >= 4 and resto != 1):
             blocos.append(atual); atual = []
     if atual:
-        if len(atual) == 1 and blocos: blocos[-1] += atual
+        if len(atual) == 1 and blocos and len(" ".join(blocos[-1] + atual)) <= MAX_CHARS: blocos[-1] += atual
         else: blocos.append(atual)
     return blocos
 

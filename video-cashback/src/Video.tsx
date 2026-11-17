@@ -4,8 +4,9 @@ import { SEGS, f, janela, seg } from "./base";
 import { Mapa } from "./Mapa";
 import { C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12, C13, C14, C15, Fundos } from "./Cenas";
 import { Cena, Legendas } from "./UI";
+import { Assinatura, Encerramento } from "./Marca";
 
-const CENAS: Record<string, React.FC<{ dur: number }>> = { s01: C01, s02: C02, s03: C03, s04: C04, s05: C05, s06: C06, s07: C07, s08: C08, s09: C09, s10: C10, s11: C11, s12: C12, s13: C13, s14: C14, s15: C15 };
+const CENAS: Record<string, React.FC<{ dur: number }>> = { s01: C01, s02: C02, s03: C03, s04: C04, s05: C05, s06: C06, s07: C07, s08: C08, s09: C09, s10: C10, s11: C11, s12: C12, s13: C13, s14: C14, s15: C15, s16: Encerramento };
 
 // efeitos sonoros: [arquivo, id do trecho, segundos após o início do trecho, volume]
 const SFX: [string, string, number, number][] = [
@@ -47,7 +48,13 @@ const SFX: [string, string, number, number][] = [
   ["moedas", "s14", 4.6, 0.4],
   ["whoosh_grave", "s15", 0.3, 0.55],
   ["hit", "s15", 4.4, 0.5],
-  ["pop", "s15", 5.0, 0.55],
+  ["pop", "s15", 4.6, 0.55],
+  ["whoosh_grave", "s16", -0.3, 0.6],
+  ["pop", "s16", 0.1, 0.5],
+  ["clique", "s16", 1.4, 0.7],
+  ["pop", "s16", 1.6, 0.5],
+  ["clique", "s16", 2.6, 0.7],
+  ["hit", "s16", 2.7, 0.35],
 ];
 
 const Trilha: React.FC = () => {
@@ -85,6 +92,7 @@ export const Video: React.FC = () => {
           </Sequence>
         );
       })}
+      <Assinatura />
       <Legendas />
       {/* voz */}
       {SEGS.map((s) => (

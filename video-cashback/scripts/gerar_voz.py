@@ -26,6 +26,6 @@ for s in segs:
     d = dur(wav)
     result.append({"id": s["id"], "text": s["text"], "start": round(t,3), "duration": round(d,3)})
     t += d + GAP
-json.dump({"total": round(t + 1.5, 3), "segments": result}, open(os.path.join(ROOT,"src/tempos.json"),"w"), ensure_ascii=False, indent=1)
+json.dump({"total": round(t + 2.6, 3), "segments": result}, open(os.path.join(ROOT,"src/tempos.json"),"w"), ensure_ascii=False, indent=1)
 print("total", round(t,2))
 for r in result: print(r["id"], r["start"], r["duration"])
