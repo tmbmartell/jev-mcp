@@ -5,29 +5,28 @@ import { COR, FONTE, H, W, geoPx, seg } from "./base";
 
 type Cam = { t: number; cx: number; cy: number; z: number };
 
-const BR: [number, number] = [1456, 1190];
-const brCentro = (z: number): Omit<Cam, "t"> => ({ cx: BR[0], cy: BR[1], z });
-const brEsq = (z: number): Omit<Cam, "t"> => ({ cx: BR[0] + 500 / Math.min(z, 1.85), cy: BR[1], z: Math.min(z, 1.85) });
-const MUNDO = { cx: 2048, cy: 1024, z: 0.535 };
+// layout vertical (1080x1920): o Brasil ocupa a metade de cima e os cards ficam embaixo
+const BR: [number, number] = [1440, 1185];
+/** Brasil com o centro na altura `y` da tela. */
+const brEm = (z: number, y: number): Omit<Cam, "t"> => ({ cx: BR[0], cy: BR[1] + (H / 2 - y) / z, z });
+const MUNDO = { cx: 1560, cy: 1060, z: 0.94 };
 const BSB = geoPx(-47.93, -15.78);
+const bsbEm = (z: number, y: number): Omit<Cam, "t"> => ({ cx: BSB[0], cy: BSB[1] + (H / 2 - y) / z, z });
 
 const keys = (): Cam[] => {
   const s = (id: string) => seg(id).start;
   return [
     { t: 0, ...MUNDO },
     { t: 0.4, ...MUNDO },
-    { t: 3.4, ...brCentro(2.0) },
-    { t: s("s02") + 3, ...brCentro(2.15) },
-    { t: s("s03") + 0.8, ...brEsq(1.95) },
-    { t: s("s05"), ...brEsq(2.05) },
-    { t: s("s05") + 0.8, ...brCentro(2.3) },
-    { t: s("s06") + 0.6, ...brEsq(1.95) },
-    { t: s("s08"), ...brEsq(2.1) },
-    { t: s("s09"), ...brEsq(2.0) },
-    { t: s("s12") + 0.8, ...brEsq(1.9) },
-    { t: s("s13") + 0.8, cx: BSB[0] + 30, cy: BSB[1] + 10, z: 2.25 },
-    { t: s("s14") + 6, cx: BSB[0] + 30, cy: BSB[1] + 10, z: 2.55 },
-    { t: s("s15") + 0.3, cx: BSB[0] + 30, cy: BSB[1] + 10, z: 2.55 },
+    { t: 3.4, ...brEm(2.1, 860) },
+    { t: s("s02") + 3, ...brEm(2.2, 880) },
+    { t: s("s03") + 0.8, ...brEm(2.1, 600) },
+    { t: s("s04") + 0.5, ...brEm(2.1, 600) },
+    { t: s("s09") - 0.5, ...brEm(2.0, 620) },
+    { t: s("s09") + 1.5, ...brEm(2.1, 600) },
+    { t: s("s13") + 0.8, ...bsbEm(2.6, 860) },
+    { t: s("s14") + 6, ...bsbEm(2.9, 860) },
+    { t: s("s15") + 0.3, ...bsbEm(2.9, 860) },
     { t: s("s15") + 3.5, ...MUNDO },
     { t: 999, ...MUNDO },
   ];

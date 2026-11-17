@@ -1,7 +1,8 @@
 # Cashback Tributário — vídeo explicativo (estilo mapa + infográfico)
 
-Vídeo de ~1min49s, 1920x1080, 30 fps, feito em [Remotion](https://remotion.dev).
-Estilo: mapa de satélite escurecido, Brasil com contorno em glow, cards de vidro,
+Vídeo **vertical 9:16** (1080x1920, 30 fps, ~1min40s), feito em [Remotion](https://remotion.dev).
+Narração 1,1x mais rápida. Estilo: cenas de mapa de satélite (Brasil com glow) alternando com cenas
+de fundo próprio (gradiente, grade técnica, marca d'água e partículas); cards de vidro,
 ícones com pop-in, títulos Montserrat Black branco/dourado, legendas dinâmicas
 e quebra histórica em sépia (1789, a Derrama).
 
@@ -15,6 +16,8 @@ e quebra histórica em sépia (1789, a Derrama).
 | `src/Mapa.tsx` | Mapa, câmera (zoom/pan) e rotas de moedas |
 | `src/Cenas.tsx` | Uma cena de sobreposição por trecho (s01–s15) |
 | `src/Video.tsx` | Timeline: cenas, legendas, voz, trilha e efeitos (lista `SFX`) |
+| `src/Capa.tsx` | Capa vertical (composição `Capa`) |
+| `scripts/gerar_srt.py` | Gera `out/legendas.srt` com os mesmos blocos/tempos da tela |
 
 Tudo é sincronizado pelo `src/tempos.json`: trocou a voz, recalcula e o vídeo se reajusta.
 
@@ -22,7 +25,7 @@ Tudo é sincronizado pelo `src/tempos.json`: trocou a voz, recalcula e o vídeo 
 1. Grave/gere **um arquivo por trecho** (s01…s15, o texto está em `scripts/narracao.json`).
 2. Salve como `public/voz/s01.wav`, `public/voz/s02.wav`…
 3. Rode `python3 scripts/gerar_voz.py --so-tempos` (recalcula os tempos).
-4. Rode `python3 scripts/gerar_sons.py` (ajusta a duração da trilha).
+4. Rode `python3 scripts/gerar_sons.py` (ajusta a duração da trilha) e `python3 scripts/gerar_srt.py`.
 
 ## Regerar do zero
 ```bash
@@ -32,7 +35,9 @@ pip install piper-tts numpy
 python3 scripts/gerar_voz.py caminho/pt_BR-faber-medium.onnx
 python3 scripts/gerar_sons.py
 npx remotion studio         # editar/visualizar
-npx remotion render CashbackTributario out/cashback-tributario.mp4
+npx remotion render CashbackTributario out/cashback-tributario-vertical.mp4
+npx remotion still Capa out/capa.png
+python3 scripts/gerar_srt.py
 ```
 
 ## Créditos

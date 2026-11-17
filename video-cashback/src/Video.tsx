@@ -2,7 +2,7 @@ import React from "react";
 import { AbsoluteFill, Html5Audio, Sequence, interpolate, staticFile, useCurrentFrame } from "remotion";
 import { SEGS, f, janela, seg } from "./base";
 import { Mapa } from "./Mapa";
-import { C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12, C13, C14, C15 } from "./Cenas";
+import { C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12, C13, C14, C15, Fundos } from "./Cenas";
 import { Cena, Legendas } from "./UI";
 
 const CENAS: Record<string, React.FC<{ dur: number }>> = { s01: C01, s02: C02, s03: C03, s04: C04, s05: C05, s06: C06, s07: C07, s08: C08, s09: C09, s10: C10, s11: C11, s12: C12, s13: C13, s14: C14, s15: C15 };
@@ -73,6 +73,7 @@ export const Video: React.FC = () => {
   return (
     <AbsoluteFill style={{ background: "#000" }}>
       <Mapa />
+      <Fundos />
       {SEGS.map((s) => {
         const Comp = CENAS[s.id];
         const { from, dur } = janela(s.id);

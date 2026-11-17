@@ -128,15 +128,16 @@ export const Legendas: React.FC = () => {
   const local = frame - f(iniBloco);
   const p = interpolate(local, [0, 5], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) });
   return (
-    <div style={{ position: "absolute", left: 0, right: 0, bottom: 64, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+    <div style={{ position: "absolute", left: 50, right: 50, bottom: 400, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
       <div
         style={{
           fontFamily: FONTE,
           fontWeight: 800,
-          fontSize: 54,
+          fontSize: 60,
+          lineHeight: 1.15,
           color: COR.branco,
           textAlign: "center",
-          maxWidth: 1500,
+          maxWidth: 960,
           textShadow: "0 3px 3px rgba(0,0,0,1), 0 6px 20px rgba(0,0,0,0.9)",
           opacity: p,
           transform: `translateY(${(1 - p) * 14}px) scale(${0.96 + 0.04 * p})`,

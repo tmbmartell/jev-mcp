@@ -1,95 +1,95 @@
 {
- "total": 107.399,
+ "total": 97.466,
  "segments": [
   {
    "id": "s01",
    "text": "Você já parou para pensar que, até quando compra o básico para sobreviver, uma parte do seu dinheiro vai direto para o governo?",
    "start": 0.6,
-   "duration": 5.72
+   "duration": 5.207
   },
   {
    "id": "s02",
    "text": "Pois agora, parte desse dinheiro poderá fazer o caminho de volta para o seu bolso.",
-   "start": 6.77,
-   "duration": 3.427
+   "start": 6.187,
+   "duration": 3.083
   },
   {
    "id": "s03",
    "text": "A partir de janeiro de 2027, cerca de 70 milhões de brasileiros poderão ser beneficiados pelo chamado cashback tributário, que promete devolver parte dos impostos pagos por famílias de baixa renda.",
-   "start": 10.647,
-   "duration": 10.479
+   "start": 9.65,
+   "duration": 9.594
   },
   {
    "id": "s04",
    "text": "A lógica é simples: quem ganha menos sente mais o peso dos impostos no orçamento. E a proposta é diminuir essa desigualdade.",
-   "start": 21.576,
-   "duration": 6.943
+   "start": 19.624,
+   "duration": 6.312
   },
   {
    "id": "s05",
    "text": "Mas atenção: não é o valor da compra que volta, e sim uma parte do imposto pago.",
-   "start": 28.97,
-   "duration": 4.697
+   "start": 26.316,
+   "duration": 4.318
   },
   {
    "id": "s06",
    "text": "Nas contas de água, energia, esgoto, gás canalizado e telefonia, a previsão é devolver 100% do novo imposto federal, a CBS.",
-   "start": 34.116,
-   "duration": 7.666
+   "start": 31.014,
+   "duration": 6.97
   },
   {
    "id": "s07",
    "text": "Em outras compras elegíveis, a devolução será de 20% desse tributo.",
-   "start": 42.232,
-   "duration": 3.817
+   "start": 38.364,
+   "duration": 3.396
   },
   {
    "id": "s08",
    "text": "E imposto sempre mexeu com o brasileiro. Em 1789, a cobrança do quinto do ouro, a famosa derrama, quase virou revolução em Minas Gerais.",
-   "start": 46.499,
-   "duration": 8.649
+   "start": 42.14,
+   "duration": 7.905
   },
   {
    "id": "s09",
    "text": "Para receber, a família deverá estar no Cadastro Único, ter renda de até meio salário mínimo por pessoa e CPF regular.",
-   "start": 55.598,
-   "duration": 6.32
+   "start": 50.424,
+   "duration": 5.701
   },
   {
    "id": "s10",
    "text": "O benefício será automático, mas será importante manter o cadastro atualizado e informar o CPF nas notas fiscais.",
-   "start": 62.368,
-   "duration": 6.385
+   "start": 56.506,
+   "duration": 5.863
   },
   {
    "id": "s11",
    "text": "Embora o programa comece em janeiro, a primeira devolução em dinheiro está prevista para abril de 2027.",
-   "start": 69.203,
-   "duration": 5.303
+   "start": 62.749,
+   "duration": 4.82
   },
   {
    "id": "s12",
    "text": "A estimativa é devolver aproximadamente R$ 10 bilhões em 2027. Dividindo pelos 70 milhões de beneficiários, dá cerca de R$ 12 por mês, por pessoa.",
-   "start": 74.956,
-   "duration": 9.602
+   "start": 67.949,
+   "duration": 8.729
   },
   {
    "id": "s13",
    "text": "Mas existe um desafio: garantir que os sistemas estejam preparados e que os valores cheguem aos beneficiários.",
-   "start": 85.008,
-   "duration": 5.352
+   "start": 77.059,
+   "duration": 4.786
   },
   {
    "id": "s14",
    "text": "Porque uma coisa é o governo prometer devolver impostos. Outra é fazer esse dinheiro chegar, de verdade, à mesa de quem precisa.",
-   "start": 90.81,
-   "duration": 6.692
+   "start": 82.225,
+   "duration": 6.167
   },
   {
    "id": "s15",
    "text": "E fica a pergunta: devolver parte do imposto é suficiente, ou o verdadeiro avanço seria fazer com que o básico custasse menos para os brasileiros?",
-   "start": 97.952,
-   "duration": 7.498
+   "start": 88.771,
+   "duration": 6.815
   }
  ]
 }

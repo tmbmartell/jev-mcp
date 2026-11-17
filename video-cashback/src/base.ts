@@ -2,8 +2,8 @@ import { continueRender, delayRender, staticFile } from "remotion";
 import tempos from "./tempos.json";
 
 export const FPS = 30;
-export const W = 1920;
-export const H = 1080;
+export const W = 1080;
+export const H = 1920;
 
 export const COR = {
   branco: "#FFFFFF",
